@@ -1,3 +1,8 @@
+setup: install just-build package-force-reinstall
+
+just-build:
+	poetry build
+
 install:
 	poetry install
 
@@ -25,5 +30,3 @@ package-install:
 
 package-force-reinstall:
 	python -m pip install --user --force-reinstall dist/*.whl
-
-setup: .PHONY package-force-reinstall
