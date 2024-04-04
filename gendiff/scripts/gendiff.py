@@ -3,8 +3,8 @@ import argparse
 import json
 
 SIGNS = {
-    'equal': ' ',
-    'not equal': '-',
+    'same': ' ',
+    'del': '-',
     'new': '+'
 }
 
@@ -18,41 +18,67 @@ def format(value):
         return str(value)
 
 
-def generate_line(key, value, sign=SIGNS['equal'], filler=FILLER_TEMPLATE):
+def generate_line(key, value, sign=SIGNS['same'], filler=FILLER_TEMPLATE):
     return f'{filler}{format(sign)} {format(key)}: {format(value)}'
 
 
+def generate_dictionary(key, value, sign=SIGNS['same'], filler=FILLER_TEMPLATE):
+    return {'key': key, 'value': value, "sign": sign, "filler": filler}
+
+
+def is_new_key(key1, dict_list):
+    for dictionary in dict_list:
+        key2 = dictionary.get('key')
+        if key1 == key2:
+            return False
+    return True
+
+
 def get_item_difference(key, value1, dictionary,
-                        filler=FILLER_TEMPLATE, diff=None):
+                        filler=FILLER_TEMPLATE):
     result = []
-    if diff is None:
-        value2 = dictionary.get(key)
-        if format(value1) == format(value2):
-            return [generate_line(key, value1, sign=SIGNS['equal'],
-                                  filler=filler)]
-        else:
-            result = [generate_line(key, value1, sign=SIGNS['not equal'],
+    value2 = dictionary.get(key)
+    if format(value1) == format(value2):
+        return [generate_dictionary(key, value1,
+                                    sign=SIGNS['same'],
                                     filler=filler)]
-            if value2 is not None:
-                result.append(generate_line(key, value2, sign=SIGNS['new'],
-                                            filler=filler))
     else:
-        chunk = generate_line(key, value1, sign='', filler='')
-        if chunk not in diff:
-            result = [generate_line(key, value1, sign=SIGNS['new'],
-                                    filler=filler)]
-        else:
-            result = []
+        result = [generate_dictionary(key, value1,
+                                      sign=SIGNS['del'],
+                                      filler=filler)]
+        if value2 is not None:
+            result.append(generate_dictionary(key, value2,
+                                              sign=SIGNS['new'],
+                                              filler=filler))
     return result
 
 
-def get_first_letter(line, filler=FILLER_TEMPLATE):
-    line_copy = line
-    line_copy = line_copy.replace(filler, '')
-    line_copy = line_copy.replace(' ', '')
-    line_copy = line_copy.replace('+', '')
-    line_copy = line_copy.replace('-', '')
-    return line_copy[0]
+def get_key(dictionary):
+    return dictionary['key']
+
+
+def get_value(dictionary):
+    return dictionary['value']
+
+
+def get_sign(dictionary):
+    return dictionary['sign']
+
+
+def get_filler(dictionary):
+    return dictionary['filler']
+
+
+def parse_dict_list(dict_list):
+    lines = []
+    for dict in dict_list:
+        filler = get_filler(dict)
+        sign = get_sign(dict)
+        key = get_key(dict)
+        value = get_value(dict)
+        new_line = generate_line(key=key, value=value, sign=sign, filler=filler)
+        lines.append(new_line)
+    return '\n'.join(lines)
 
 
 def generate_diff(first_file, second_file):
@@ -62,24 +88,22 @@ def generate_diff(first_file, second_file):
     json1 = json.load(file1)
     json2 = json.load(file2)
 
-    for jso1_key, jso1_value in json1.items():
-        diff = get_item_difference(jso1_key, jso1_value,
+    for key, value in json1.items():
+        diff = get_item_difference(key, value,
                                    json2, filler=FILLER_TEMPLATE)
         if diff != []:
             result.extend(diff)
 
-    resulting_str = '\n'.join(result)
+    for key, value in json2.items():
+        if is_new_key(key, result):
+            new_item = generate_dictionary(key, value,
+                                           sign=SIGNS['new'],
+                                           filler=FILLER_TEMPLATE)
+            result.append(new_item)
 
-    for jso2_key, jso2_value in json2.items():
-        diff = get_item_difference(jso2_key, jso2_value, None,
-                                   filler=FILLER_TEMPLATE,
-                                   diff=resulting_str)
-        if diff != []:
-            result.extend(diff)
-
-    result = sorted(result, key=get_first_letter)
-    resulting_str = '\n'.join(['{', *result, '}'])
-    return resulting_str
+    result = sorted(result, key=get_key)
+    result = parse_dict_list(result)
+    return '{\n' + result + '\n}'
 
 
 def parse():

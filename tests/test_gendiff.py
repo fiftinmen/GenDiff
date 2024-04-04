@@ -4,6 +4,8 @@ from gendiff.scripts.gendiff import (
     get_item_difference,
     generate_line,
     generate_diff,
+    is_new_key,
+    generate_dictionary,
     FILLER_TEMPLATE,
     SIGNS
 )
@@ -29,42 +31,47 @@ list1 = [{'foo': 'bar'}]
 filler = FILLER_TEMPLATE
 filler1 = '!'
 
-sign_equal = SIGNS['equal']
-sign_not_equal = SIGNS['not equal']
+sign_same = SIGNS['same']
+sign_del = SIGNS['del']
 sign_new = SIGNS['new']
 
 
 def test_generate_line():
-    assert generate_line(key, value) == f"{filler}{sign_equal} {key}: {value}"
-    assert generate_line(key, value, sign=sign_not_equal) ==\
-        f"{filler}{sign_not_equal} {key}: {value}"
-    assert generate_line(key, value, sign=sign_not_equal, filler=filler1) ==\
-        f"{filler1}{sign_not_equal} {key}: {value}"
+    assert generate_line(key, value) == f"{filler}{sign_same} {key}: {value}"
+    assert generate_line(key, value, sign=sign_del) ==\
+        f"{filler}{sign_del} {key}: {value}"
+    assert generate_line(key, value, sign=sign_del, filler=filler1) ==\
+        f"{filler1}{sign_del} {key}: {value}"
     assert generate_line(key, value, filler=filler1) ==\
-        f"{filler1}{sign_equal} {key}: {value}"
+        f"{filler1}{sign_same} {key}: {value}"
     assert generate_line(number_key, number_value, filler=filler1) ==\
-        f"{filler1}{sign_equal} {str(number_key)}: {str(number_value)}"
+        f"{filler1}{sign_same} {str(number_key)}: {str(number_value)}"
+
+
+def test_generate_dictionary():
+    assert generate_dictionary(key1, value1, sign_new, filler1) == dict(
+        [['key', key1], ['value', value1],
+         ['sign', sign_new], ['filler', filler1]])
+    assert generate_dictionary(key1, value1) == dict(
+        [['key', key1], ['value', value1],
+         ['sign', sign_same], ['filler', FILLER_TEMPLATE]])
 
 
 def test_get_item_difference():
-    result1 = [f'{filler}{sign_equal} {key}: {value}']
+    result1 = [generate_dictionary(key, value)]
     assert get_item_difference(key, value, {key: value}) == result1
-    assert dictionary1 == dictionary1_copy
 
     result2 = [
-        f'{filler}{sign_not_equal} {key}: {value}',
-        f'{filler}{sign_new} {key}: {value1}'
+        generate_dictionary(key, value, sign_del, filler1),
+        generate_dictionary(key, value1, sign_new, filler1),
     ]
-    assert get_item_difference(key, value, {key: value1}) == result2
+    assert get_item_difference(key, value,
+                               {key: value1}, filler=filler1) == result2
 
-    result3 = [
-        f'{filler}{sign_new} {key1}: {value1}'
-    ]
-    assert get_item_difference(key1, value1,
-                               {key: value}, diff=result2) == result3
-
-    result3 = [f'{filler}{sign_not_equal} {key}: {value}']
+    result3 = [generate_dictionary(key, value, sign_del)]
     assert get_item_difference(key, value, {key1: value1}) == result3
+    result3 = [generate_dictionary(key, value, sign_del)]
+    assert get_item_difference(key, value, {}) == result3
 
 
 file1 = 'tests/file1.json'
@@ -81,3 +88,11 @@ def test_generate_diff():
     assert generate_diff(file1, file1) == result_diffs2
     assert generate_diff(file1, file3) == result_diffs3
     assert generate_diff(file3, file1) == result_diffs4
+
+
+def test_is_new_key():
+    assert is_new_key(value, [{'key': value}]) is False
+    assert is_new_key(value, [{'key': value1}]) is True
+    assert is_new_key(value, [{'key': value1}, {'key': value}]) is False
+    assert is_new_key(value, [{}]) is True
+    assert is_new_key(value, [{'mouse': value}]) is True
