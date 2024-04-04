@@ -26,9 +26,39 @@ def generate_dictionary(key, value, sign=SIGNS['same'], filler=FILLER_TEMPLATE):
     return {'key': key, 'value': value, "sign": sign, "filler": filler}
 
 
+def get_key(dictionary):
+    key = dictionary.get('key')
+    if key:
+        return key
+    elif len(dictionary) == 1:
+        return dictionary.keys()
+    return None
+
+
+def get_value(dictionary, key=None):
+    if key is None:
+        return dictionary.get('value')
+    else:
+        return dictionary.get(key)
+
+
+def get_sign(dictionary, default=SIGNS['same']):
+    sign = dictionary.get('sign')
+    if sign:
+        return sign
+    return default
+
+
+def get_filler(dictionary, default=FILLER_TEMPLATE):
+    filler = dictionary.get('filler')
+    if filler:
+        return filler
+    return default
+
+
 def is_new_key(key1, dict_list):
     for dictionary in dict_list:
-        key2 = dictionary.get('key')
+        key2 = get_key(dictionary)
         if key1 == key2:
             return False
     return True
@@ -37,7 +67,7 @@ def is_new_key(key1, dict_list):
 def get_item_difference(key, value1, dictionary,
                         filler=FILLER_TEMPLATE):
     result = []
-    value2 = dictionary.get(key)
+    value2 = get_value(dictionary, key)
     if format(value1) == format(value2):
         return [generate_dictionary(key, value1,
                                     sign=SIGNS['same'],
@@ -53,22 +83,6 @@ def get_item_difference(key, value1, dictionary,
     return result
 
 
-def get_key(dictionary):
-    return dictionary['key']
-
-
-def get_value(dictionary):
-    return dictionary['value']
-
-
-def get_sign(dictionary):
-    return dictionary['sign']
-
-
-def get_filler(dictionary):
-    return dictionary['filler']
-
-
 def parse_dict_list(dict_list):
     lines = []
     for dict in dict_list:
@@ -81,12 +95,8 @@ def parse_dict_list(dict_list):
     return '\n'.join(lines)
 
 
-def generate_diff(first_file, second_file):
+def generate_diff(json1, json2):
     result = []
-    file1 = open(first_file, 'r', encoding='utf-8')
-    file2 = open(second_file, 'r', encoding='utf-8')
-    json1 = json.load(file1)
-    json2 = json.load(file2)
 
     for key, value in json1.items():
         diff = get_item_difference(key, value,
@@ -106,7 +116,15 @@ def generate_diff(first_file, second_file):
     return '{\n' + result + '\n}'
 
 
-def parse():
+def compare_jsons(first_file, second_file):
+    file1 = open(first_file, 'r', encoding='utf-8')
+    file2 = open(second_file, 'r', encoding='utf-8')
+    json1 = json.load(file1)
+    json2 = json.load(file2)
+    return generate_diff(json1, json2)
+
+
+def gendiff_parser():
     parser = argparse.ArgumentParser(
         prog='gendiff',
         description='Compares two configuration files and shows a difference.'
@@ -115,13 +133,12 @@ def parse():
     parser.add_argument('second_file')
     parser.add_argument('-f', '--format', help='set format of output')
     args = parser.parse_args()
-    diff = generate_diff(args.first_file, args.second_file)
-    print(diff)
+    diff = compare_jsons(args.first_file, args.second_file)
     return diff
 
 
 def main():
-    parse()
+    gendiff_parser()
     return
 
 
