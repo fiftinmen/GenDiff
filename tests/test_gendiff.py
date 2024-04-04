@@ -3,7 +3,7 @@ from copy import deepcopy
 from gendiff.scripts.gendiff import (
     get_item_difference,
     generate_line,
-    compare_jsons,
+    generate_diff,
     is_new_key,
     generate_dictionary,
     FILLER_TEMPLATE,
@@ -83,11 +83,11 @@ result_diffs3 = open('tests/result_diffs3.txt', 'r', encoding='utf8').read()
 result_diffs4 = open('tests/result_diffs4.txt', 'r', encoding='utf8').read()
 
 
-def test_compare_jsons():
-    assert compare_jsons(file1, file2) == result_diffs1
-    assert compare_jsons(file1, file1) == result_diffs2
-    assert compare_jsons(file1, file3) == result_diffs3
-    assert compare_jsons(file3, file1) == result_diffs4
+def test_generate_diff():
+    assert generate_diff(file1, file2) == result_diffs1
+    assert generate_diff(file1, file1) == result_diffs2
+    assert generate_diff(file1, file3) == result_diffs3
+    assert generate_diff(file3, file1) == result_diffs4
 
 
 def test_is_new_key():

@@ -95,7 +95,7 @@ def parse_dict_list(dict_list):
     return '\n'.join(lines)
 
 
-def generate_diff(json1, json2):
+def compare_jsons(json1, json2):
     result = []
 
     for key, value in json1.items():
@@ -116,12 +116,12 @@ def generate_diff(json1, json2):
     return '{\n' + result + '\n}'
 
 
-def compare_jsons(first_file, second_file):
+def generate_diff(first_file, second_file):
     file1 = open(first_file, 'r', encoding='utf-8')
     file2 = open(second_file, 'r', encoding='utf-8')
     json1 = json.load(file1)
     json2 = json.load(file2)
-    return generate_diff(json1, json2)
+    return compare_jsons(json1, json2)
 
 
 def gendiff_parser():
@@ -133,7 +133,10 @@ def gendiff_parser():
     parser.add_argument('second_file')
     parser.add_argument('-f', '--format', help='set format of output')
     args = parser.parse_args()
-    diff = compare_jsons(args.first_file, args.second_file)
+    first_file = args.first_file
+    second_file = args.second_file
+    diff = generate_diff(first_file, second_file)
+    print(diff)
     return diff
 
 

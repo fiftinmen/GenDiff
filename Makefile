@@ -29,7 +29,9 @@ build: check
 .PHONY: install test lint selfcheck check build
 
 package-install:
-	python -m pip install --user dist/*.whl
+	python3 -m pip install --user dist/*.whl
+
+
 
 package-force-reinstall:
-	python -m pip install --user --force-reinstall dist/*.whl
+	python3 -m pip install --user --force-reinstall dist/*.whl
