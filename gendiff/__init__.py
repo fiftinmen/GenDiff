@@ -1,9 +1,12 @@
-from gendiff.scripts.gendiff import (
+from gendiff.scripts.gendiff_parser.gendiff_parser import (
     generate_diff,
-    compare_jsons
+    gendiff_parser,
+    compare_dicts
 )
+
 
 __all__ = {
     'generate_diff',
-    'compare_jsons'
+    'compare_dicts',
+    'gendiff_parser'
 }

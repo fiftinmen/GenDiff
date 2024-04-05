@@ -1,7 +1,7 @@
 import pytest
 import os
 from copy import deepcopy
-from gendiff.scripts.gendiff import (
+from gendiff.scripts.gendiff_parser.gendiff_parser import (
     get_item_difference,
     generate_line,
     generate_diff,
@@ -13,8 +13,6 @@ from gendiff.scripts.gendiff import (
     get_filler,
     get_value,
     get_key,
-    main,
-    gendiff_parser
 )
 
 key = 'foo'
@@ -101,9 +99,6 @@ def test_get_item_difference():
 
 
 fixtures_path = 'tests/fixtures'
-file1 = os.path.join(fixtures_path, 'file1.json')
-file2 = os.path.join(fixtures_path, 'file2.json')
-file3 = os.path.join(fixtures_path, 'file3.json')
 result_diff1_path = os.path.join(fixtures_path, 'result_diffs1.txt')
 result_diff2_path = os.path.join(fixtures_path, 'result_diffs2.txt')
 result_diff3_path = os.path.join(fixtures_path, 'result_diffs3.txt')
@@ -114,7 +109,20 @@ result_diffs3 = open(result_diff3_path, 'r', encoding='utf8').read()
 result_diffs4 = open(result_diff4_path, 'r', encoding='utf8').read()
 
 
-def test_generate_diff():
+def test_generate_diff_from_jsons():
+    file1 = os.path.join(fixtures_path, 'file1.json')
+    file2 = os.path.join(fixtures_path, 'file2.json')
+    file3 = os.path.join(fixtures_path, 'file3.json')
+    assert generate_diff(file1, file2) == result_diffs1
+    assert generate_diff(file1, file1) == result_diffs2
+    assert generate_diff(file1, file3) == result_diffs3
+    assert generate_diff(file3, file1) == result_diffs4
+
+
+def test_generate_diff_from_yamls():
+    file1 = os.path.join(fixtures_path, 'file1.yml')
+    file2 = os.path.join(fixtures_path, 'file2.yaml')
+    file3 = os.path.join(fixtures_path, 'file3.yml')
     assert generate_diff(file1, file2) == result_diffs1
     assert generate_diff(file1, file1) == result_diffs2
     assert generate_diff(file1, file3) == result_diffs3
