@@ -31,7 +31,7 @@ def get_key(dictionary):
     if key:
         return key
     elif len(dictionary) == 1:
-        return dictionary.keys()
+        return list(dictionary.keys())[0]
     return None
 
 
@@ -101,8 +101,7 @@ def compare_jsons(json1, json2):
     for key, value in json1.items():
         diff = get_item_difference(key, value,
                                    json2, filler=FILLER_TEMPLATE)
-        if diff != []:
-            result.extend(diff)
+        result.extend(diff)
 
     for key, value in json2.items():
         if is_new_key(key, result):
@@ -137,7 +136,6 @@ def gendiff_parser():
     second_file = args.second_file
     diff = generate_diff(first_file, second_file)
     print(diff)
-    return diff
 
 
 def main():

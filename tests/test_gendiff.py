@@ -1,4 +1,5 @@
 import pytest
+import os
 from copy import deepcopy
 from gendiff.scripts.gendiff import (
     get_item_difference,
@@ -7,7 +8,13 @@ from gendiff.scripts.gendiff import (
     is_new_key,
     generate_dictionary,
     FILLER_TEMPLATE,
-    SIGNS
+    SIGNS,
+    get_sign,
+    get_filler,
+    get_value,
+    get_key,
+    main,
+    gendiff_parser
 )
 
 key = 'foo'
@@ -21,19 +28,38 @@ number_value = 1
 bool_key = True
 bool_value = False
 
-dictionary1 = {'foo': 'bar'}
-dictionary1_copy = deepcopy(dictionary1)
-dictionary2 = {'foobar': 'foobar'}
-dictionary3 = {'foo': 'foobar'}
 
 list1 = [{'foo': 'bar'}]
+
 
 filler = FILLER_TEMPLATE
 filler1 = '!'
 
+
 sign_same = SIGNS['same']
 sign_del = SIGNS['del']
 sign_new = SIGNS['new']
+
+
+dictionary1 = {'foo': 'bar'}
+dictionary1_copy = deepcopy(dictionary1)
+dictionary2 = {'foobar': 'foobar'}
+dictionary3 = {'foo': 'foobar'}
+dictionary4 = generate_dictionary(key=key, value=value,
+                                  sign=sign_same, filler=filler)
+
+
+def test_getters():
+    assert get_sign(dictionary4, sign_new) == sign_same
+    assert get_key(dictionary4) == key
+    assert get_value(dictionary4) == value
+    assert get_filler(dictionary4) == filler
+
+    assert get_sign(dictionary3) == sign_same
+    assert get_key(dictionary3) == 'foo'
+    assert get_value(dictionary3) is None
+    assert get_value(dictionary3, 'foo') == 'foobar'
+    assert get_filler(dictionary3) == FILLER_TEMPLATE
 
 
 def test_generate_line():
@@ -74,13 +100,18 @@ def test_get_item_difference():
     assert get_item_difference(key, value, {}) == result3
 
 
-file1 = 'tests/file1.json'
-file2 = 'tests/file2.json'
-file3 = 'tests/file3.json'
-result_diffs1 = open('tests/result_diffs1.txt', 'r', encoding='utf8').read()
-result_diffs2 = open('tests/result_diffs2.txt', 'r', encoding='utf8').read()
-result_diffs3 = open('tests/result_diffs3.txt', 'r', encoding='utf8').read()
-result_diffs4 = open('tests/result_diffs4.txt', 'r', encoding='utf8').read()
+fixtures_path = 'tests/fixtures'
+file1 = os.path.join(fixtures_path, 'file1.json')
+file2 = os.path.join(fixtures_path, 'file2.json')
+file3 = os.path.join(fixtures_path, 'file3.json')
+result_diff1_path = os.path.join(fixtures_path, 'result_diffs1.txt')
+result_diff2_path = os.path.join(fixtures_path, 'result_diffs2.txt')
+result_diff3_path = os.path.join(fixtures_path, 'result_diffs3.txt')
+result_diff4_path = os.path.join(fixtures_path, 'result_diffs4.txt')
+result_diffs1 = open(result_diff1_path, 'r', encoding='utf8').read()
+result_diffs2 = open(result_diff2_path, 'r', encoding='utf8').read()
+result_diffs3 = open(result_diff3_path, 'r', encoding='utf8').read()
+result_diffs4 = open(result_diff4_path, 'r', encoding='utf8').read()
 
 
 def test_generate_diff():
