@@ -77,7 +77,7 @@ def atomic_dict(key, value, sign=DEFAULT_SIGN):
 
 
 def nested_dict(object, sign=DEFAULT_SIGN):
-    if is_list(object):
+    if is_nested_dict(object):
         result = []
         for element in object:
             result.append(nested_dict(element, sign))

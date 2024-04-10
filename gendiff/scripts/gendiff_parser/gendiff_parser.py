@@ -33,7 +33,7 @@ def format(value):
         return str(value)
 
 
-def generate_view(object, filler=FILLER_TEMPLATE, level=DEFAULT_LEVEL):
+def stylish(object, filler=FILLER_TEMPLATE, level=DEFAULT_LEVEL):
     view = ''
     sign = get_sign(object)
     key = get_key(object)
@@ -48,17 +48,17 @@ def generate_view(object, filler=FILLER_TEMPLATE, level=DEFAULT_LEVEL):
         view = (f'{filler * level}{format(sign)} {format(key)}: '
                 f'{DICTIONARY_START}')
         for atom in get_atoms(value):
-            sub_view = generate_view(atom, filler, level + 2)
+            sub_view = stylish(atom, filler, level + 2)
             view = '\n'.join([view, sub_view])
         view_end = (f'{filler * (level+1)}{DICTIONARY_END}')
         view = '\n'.join([view, view_end])
         return view
 
 
-def parse_dict_list(nested_dict_, filler=FILLER_TEMPLATE, level=DEFAULT_LEVEL):
+def parse_dict_list(nested_dict_, formatter=stylish):
     lines = [DICTIONARY_START]
     for atom in nested_dict_:
-        new_lines = generate_view(atom, filler=filler, level=level)
+        new_lines = formatter(atom)
         lines.append(new_lines)
     lines.append(DICTIONARY_END)
     lines = '\n'.join(lines)
@@ -98,7 +98,7 @@ def compare(dict1, dict2):
     return nested_dict1
 
 
-def generate_diff(first_file, second_file):
+def generate_diff(first_file, second_file, formatter=stylish):
     file1 = open(first_file, 'r', encoding='utf-8')
     file2 = open(second_file, 'r', encoding='utf-8')
     if first_file.endswith('.json'):
@@ -112,7 +112,7 @@ def generate_diff(first_file, second_file):
         dict2 = YAMLload(file2, YAMLLoader)
     result = compare(dict1, dict2)
     sort_nested_dict(result)
-    result = parse_dict_list(result)
+    result = parse_dict_list(result, formatter=formatter)
     return result
 
 
