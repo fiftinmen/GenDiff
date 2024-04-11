@@ -13,3 +13,6 @@
 
 3. And even with JSON and YAML together!
 [![asciicast](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6.svg)](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6)
+
+4. Example of usage with nested JSONs.
+[![asciicast](https://asciinema.org/a/SLyry8tqav7eSo6scsCWHHhVm.svg)](https://asciinema.org/a/SLyry8tqav7eSo6scsCWHHhVm)
