@@ -1,8 +1,8 @@
 import pytest
 import os
 from copy import deepcopy
-from gendiff.atomic_dicts import (
-    atomic_dict,
+from gendiff.structured_dicts import (
+    structured_dict,
     FILLER_TEMPLATE,
     SIGNS,
     get_sign,
@@ -10,8 +10,10 @@ from gendiff.atomic_dicts import (
     get_key,
     nested_dict,
     DEFAULT_SIGN,
-    is_nested_dict
+    is_nested_dict,
+    find_structured_dict_by_key
 )
+from gendiff.formatters import plain
 from gendiff.scripts.gendiff_parser.gendiff_parser import (
     generate_diff,
     compare
@@ -45,12 +47,19 @@ dictionary1 = {'foo': 'bar'}
 dictionary1_copy = deepcopy(dictionary1)
 dictionary2 = {'foobar': 'foobar'}
 dictionary3 = {'foo': 'foobar'}
-dictionary4 = atomic_dict(key=key, value=value, sign=sign_same)
-dictionary5 = atomic_dict(key=key, value=value, sign=sign_same)
+dictionary4 = structured_dict(key=key, value=value, sign=sign_same)
+dictionary5 = structured_dict(key=key, value=value, sign=sign_same)
 dictionary6 = {'foo': {'foobar': 'foobar'}}
 dictionary7 = {'foo': {'foobar': 'foo'}}
 dictionary8 = {'foo': {'foo': 'foo'}}
 dictionary9 = {'foo': {'foobar': 'foobar', 'foobar': 'foobar'}}
+
+nested_dict1 = [
+    {'key': 'foo', 'value': 'bar', 'sign': '-'},
+    {'key': 'foo', 'value': 'foobar', 'sign': '+'},
+    {'key': 'foo1', 'value': 'foobar', 'sign': '+'},
+    {'key': 'foo1', 'value': 'foobar', 'sign': '+'}
+]
 
 
 d1_d3_result = [
@@ -87,6 +96,17 @@ d6_d9_result = [
         {'key': 'foobar', 'value': 'foobar', 'sign': ' '},
     ], 'sign': ' '},
 ]
+
+
+def test_find_structured_dict_by_key():
+    assert find_structured_dict_by_key('foo', nested_dict1, 1) == \
+        {'key': 'foo', 'value': 'bar', 'sign': '-'}
+    assert find_structured_dict_by_key('foo', nested_dict1, 0) == \
+        {'key': 'foo', 'value': 'bar', 'sign': '-'}
+    assert find_structured_dict_by_key('foo', nested_dict1, 5) == [
+        {'key': 'foo', 'value': 'bar', 'sign': '-'},
+        {'key': 'foo', 'value': 'foobar', 'sign': '+'}
+    ]
 
 
 def test_compare_plain():
@@ -140,30 +160,30 @@ def test_getters():
 
     assert get_value(None) is None
     assert get_sign(None) == DEFAULT_SIGN
-    assert get_key(None) == 'None'
+    assert get_key(None) is None
 
 
-def test_atomic_dict():
-    assert atomic_dict(key1, value1) == {
+def test_structured_dict():
+    assert structured_dict(key1, value1) == {
         'key': key1, 'value': value1, 'sign': ' '
     }
-    assert atomic_dict(key1, {'foo': 'bar'}) == {
+    assert structured_dict(key1, {'foo': 'bar'}) == {
         'key': key1, 'value': {'foo': 'bar'}, 'sign': ' '
     }
-    assert atomic_dict(key1, {'key': 'foo', 'value': 'bar'}) == {
+    assert structured_dict(key1, {'key': 'foo', 'value': 'bar'}) == {
         'key': key1, 'value': {'key': 'foo', 'value': 'bar'}, 'sign': ' '
     }
-    assert atomic_dict(
+    assert structured_dict(
         key1, {'key': 'foo', 'value': 'bar', 'sign': 'new'}) == {
         'key': key1, 'value': {'key': 'foo', 'value': 'bar', 'sign': 'new'},
         'sign': ' '
     }
-    assert atomic_dict(
+    assert structured_dict(
         key1, {'key': 'foo', 'value': 'bar', 'sign': 'new'}, 'new') == {
         'key': key1, 'value': {'key': 'foo',
                                'value': 'bar', 'sign': 'new'}, 'sign': 'new'
     }
-    assert atomic_dict(None, None, None) == {
+    assert structured_dict(None, None, None) == {
         'key': None, 'value': None, 'sign': None
     }
 
@@ -187,6 +207,14 @@ def test_generate_diff_from_jsons():
     assert generate_diff(file1, file1) == result_diffs2
     assert generate_diff(file1, file3) == result_diffs3
     assert generate_diff(file3, file1) == result_diffs4
+
+
+def test_compare_neste_with_plain_formatter():
+    result_diff_path = os.path.join(fixtures_path, 'result_plain.txt')
+    result_diffs = open(result_diff_path, 'r', encoding='utf8').read()
+    file1 = os.path.join(fixtures_path, 'nested_jsons/file1.json')
+    file2 = os.path.join(fixtures_path, 'nested_jsons/file2.json')
+    assert generate_diff(file1, file2, formatter=plain) == result_diffs
 
 
 def test_generate_diff_from_yamls():

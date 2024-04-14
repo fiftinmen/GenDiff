@@ -1,5 +1,7 @@
 setup: install just-build package-force-reinstall
 
+setup-linux: install just-build package-force-reinstall-env
+
 just-build:
 	poetry build
 
@@ -7,7 +9,7 @@ install:
 	poetry install
 
 test:
-	poetry run pytest
+	poetry run pytest -vv
 
 test-coverage:
 	poetry run pytest --cov=gendiff --cov-report xml
@@ -34,3 +36,9 @@ package-install:
 
 package-force-reinstall:
 	python -m pip install --user --force-reinstall dist/*.whl
+
+package-force-reinstall-env:
+	python3 -m pip install --force-reinstall dist/*.whl
+
+remove-envs:
+	rm -rf .venv && poetry env remove --all

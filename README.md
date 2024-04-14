@@ -16,3 +16,6 @@
 
 4. Example of usage with nested JSONs.
 [![asciicast](https://asciinema.org/a/SLyry8tqav7eSo6scsCWHHhVm.svg)](https://asciinema.org/a/SLyry8tqav7eSo6scsCWHHhVm)
+
+5. Example of usage with plain formatter.
+[![asciicast](https://asciinema.org/a/rCZhbkuvZFfxOUaJUVmSQ7XFB.svg)](https://asciinema.org/a/rCZhbkuvZFfxOUaJUVmSQ7XFB)
