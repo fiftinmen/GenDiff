@@ -1,10 +1,10 @@
 from gendiff.structured_dicts import (
     get_key,
-    get_sign,
+    get_status,
     get_value,
-    yield_changes_from_nested_dict_items,
+    yield_changes_from_tree_items,
     is_list,
-    SIGNS
+    STATUSES
 )
 
 
@@ -30,17 +30,17 @@ def format(value):
 def generate_view(object):
     length = len(object)
     key = get_key(object[0])
-    sign = get_sign(object[0])
+    status = get_status(object[0])
     value1 = format(get_value(object[0]))
     value2 = None
     if length == 2:
-        sign = SIGNS['old'] + SIGNS['new']
+        status = STATUSES['old'] + STATUSES['new']
         value2 = format(get_value(object[1]))
-    if sign != SIGNS['same']:
-        return f"Property '{key}' was {CHANGES[sign].format(value1, value2)}"
+    if status != STATUSES['same']:
+        return f"Property '{key}' was {CHANGES[status].format(value1, value2)}"
 
 
-def plain(nested_dict):
+def plain(tree):
     return [view
-            for pair in yield_changes_from_nested_dict_items(nested_dict)
+            for pair in yield_changes_from_tree_items(tree)
             if (view := generate_view(pair))]

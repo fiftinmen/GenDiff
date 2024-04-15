@@ -1,11 +1,11 @@
 from math import inf
 from copy import deepcopy
-SIGNS = {
+STATUSES = {
     'same': ' ',
     'old': '-',
     'new': '+'
 }
-DEFAULT_SIGN = SIGNS['same']
+DEFAULT_STATUS = STATUSES['same']
 DEFAULT_LEVEL = 1
 FILLER_TEMPLATE = '  '
 
@@ -17,7 +17,7 @@ def is_dict(value):
 def is_valid_structured_dict(value):
     if not is_dict(value) or len(value) < 2 or len(value) > 3:
         return False
-    return all(key in ['key', 'value', 'sign'] for key in value.keys())
+    return all(key in ['key', 'value', 'status'] for key in value.keys())
 
 
 def find_structured_dict_by_key(key1, dict_list, number=1):
@@ -48,8 +48,8 @@ def get_value(dictionary, key=None, default=None):
     return default
 
 
-def get_sign(dictionary, default=DEFAULT_SIGN):
-    return dictionary.get('sign') if is_dict(dictionary) else default
+def get_status(dictionary, default=DEFAULT_STATUS):
+    return dictionary.get('status') if is_dict(dictionary) else default
 
 
 def set_key(atom, key):
@@ -60,33 +60,33 @@ def set_value(atom, value):
     atom.update({'value': value})
 
 
-def set_sign(atom, sign):
-    atom.update({'sign': sign})
+def set_status(atom, status):
+    atom.update({'status': status})
 
 
-def structured_dict(key, value, sign=DEFAULT_SIGN):
+def structured_dict(key, value, status=DEFAULT_STATUS):
     atom = {}
     set_key(atom, key)
     set_value(atom, value)
-    set_sign(atom, sign)
+    set_status(atom, status)
     return atom
 
 
-def nested_dict(object, sign=DEFAULT_SIGN):
-    if is_nested_dict(object):
-        return [nested_dict(element, sign) for element in object]
+def tree(object, status=DEFAULT_STATUS):
+    if is_tree(object):
+        return [tree(element, status) for element in object]
     if not is_dict(object):
         return object
     elif is_valid_structured_dict(object):
         value = get_value(object)
-        value = nested_dict(value)
+        value = tree(value)
         set_value(object, value)
-        set_sign(object, sign)
+        set_status(object, status)
         return object
     else:
         result = []
         for key, value in object.items():
-            new_dict = structured_dict(key, nested_dict(value), sign)
+            new_dict = structured_dict(key, tree(value), status)
             result.append(new_dict)
         return result
 
@@ -95,7 +95,7 @@ def is_list(object):
     return isinstance(object, list)
 
 
-def is_nested_dict(object):
+def is_tree(object):
     if not is_list(object):
         return False
     elif is_list(object):
@@ -105,31 +105,31 @@ def is_nested_dict(object):
     return True
 
 
-def yield_nested_dict_items(nested_dict):
-    yield from nested_dict
+def yield_tree_items(tree):
+    yield from tree
 
 
-def extract_changes_from_nested_dict_items(nested_dict, parent=None):
+def extract_changes_from_tree_items(tree, parent=None):
     changed_properties = []
-    nested_dict_copy = deepcopy(nested_dict)
+    tree_copy = deepcopy(tree)
     keys = set()
-    for struct_dict in yield_nested_dict_items(nested_dict_copy):
+    for struct_dict in yield_tree_items(tree_copy):
         key = get_key(struct_dict)
         if key in keys:
             continue
         keys.add(key)
-        sign = get_sign(struct_dict)
-        if sign != SIGNS['same']:
+        status = get_status(struct_dict)
+        if status != STATUSES['same']:
             changed_dicts = find_structured_dict_by_key(
-                key, nested_dict, number=2
+                key, tree, number=2
             )
             for changed_dict in changed_dicts:
                 set_key(changed_dict, f'{parent}.{key}' if parent else key)
             changed_properties.append(changed_dicts)
         else:
             value = get_value(struct_dict)
-            if is_nested_dict(value):
-                child_changes = extract_changes_from_nested_dict_items(
+            if is_tree(value):
+                child_changes = extract_changes_from_tree_items(
                     value,
                     parent=f'{parent}.{key}' if parent else key
                 )
@@ -137,16 +137,16 @@ def extract_changes_from_nested_dict_items(nested_dict, parent=None):
     return changed_properties
 
 
-def yield_changes_from_nested_dict_items(nested_dict):
-    yield from extract_changes_from_nested_dict_items(nested_dict)
+def yield_changes_from_tree_items(tree):
+    yield from extract_changes_from_tree_items(tree)
 
 
-def sort_nested_dict(object):
-    if is_nested_dict(object):
-        object.sort(key=sort_nested_dict)
+def sort_tree(object):
+    if is_tree(object):
+        object.sort(key=sort_tree)
         return inf
     if is_valid_structured_dict(object):
         value = get_value(object)
-        if is_nested_dict(value):
-            value.sort(key=sort_nested_dict)
+        if is_tree(value):
+            value.sort(key=sort_tree)
         return get_key(object)

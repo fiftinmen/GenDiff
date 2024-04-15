@@ -19,3 +19,6 @@
 
 5. Example of usage with plain formatter.
 [![asciicast](https://asciinema.org/a/rCZhbkuvZFfxOUaJUVmSQ7XFB.svg)](https://asciinema.org/a/rCZhbkuvZFfxOUaJUVmSQ7XFB)
+
+6. Example of usage with JSON formatter.
+[![asciicast](https://asciinema.org/a/BQ6iP4bDgIQyGWaBI2qffUOvi.svg)](https://asciinema.org/a/BQ6iP4bDgIQyGWaBI2qffUOvi)
