@@ -61,10 +61,10 @@ def compare_values(value1, value2):
     if value1 == value2:
         values = value1
         status = STATUSES['same']
-    elif value2 and value1:
+    elif value2 is not None and value1 is not None:
         values = {'old': value1, 'new': value2}
         status = STATUSES['changed']
-    elif value2:
+    elif value2 is not None:
         values = value2
         status = STATUSES['added']
     else:
@@ -77,9 +77,9 @@ def compare(obj1, obj2, root=None):
     tree = []
     is_dict1 = is_dict(obj1)
     is_dict2 = is_dict(obj2)
-    if not (is_dict1 and is_dict2 or root):
+    if not (is_dict1 or is_dict2 or not root):
         values_type = 'children' if is_dict1 or is_dict2 else 'values'
-        values, status = compare_plain(obj1, obj2)
+        values, status = compare_values(obj1, obj2)
         add_to_tree(tree, root, values_type, values, status)
         return tree
 
@@ -91,8 +91,9 @@ def compare(obj1, obj2, root=None):
     if is_dict2:
         for key2, value2 in obj2.items():
             value1 = obj1.get(key2) if is_dict1 else obj1
-            node = compare(value1, value2, root=key1)
-            tree.extend(node)
+            if value1 is None:
+                node = compare(value1, value2, root=key2)
+                tree.extend(node)
 
     return tree
 
@@ -109,7 +110,8 @@ def generate_diff(first_file, second_file, formatter=stylish):
         dict1, dict2 = loaders[ext1](file1), loaders[ext2](file2)
     result = compare(dict1, dict2)
     sort_tree(result)
-    return parse_dict_list(result, formatter)
+    result = parse_dict_list(result, formatter)
+    return result
 
 
 def gendiff_parser():

@@ -3,7 +3,10 @@ from copy import deepcopy
 STATUSES = {
     'same': ' ',
     'old': '-',
-    'new': '+'
+    'new': '+',
+    'added': '+',
+    'removed': '-',
+    'changed': '-+'
 }
 DEFAULT_STATUS = STATUSES['same']
 DEFAULT_LEVEL = 1
@@ -141,12 +144,14 @@ def yield_changes_from_tree_items(tree):
     yield from extract_changes_from_tree_items(tree)
 
 
-def sort_tree(object):
-    if is_tree(object):
-        object.sort(key=sort_tree)
+def sort_tree(tree):
+    if is_list(tree):
+        tree.sort(key=sort_tree)
         return inf
-    if is_valid_structured_dict(object):
-        value = get_value(object)
-        if is_tree(value):
+    if is_dict(tree):
+        values = tree.get('values')
+        children = tree.get('children')
+        value = values if values is not None else children
+        if is_list(value):
             value.sort(key=sort_tree)
-        return get_key(object)
+        return get_key(tree)
