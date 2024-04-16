@@ -8,7 +8,6 @@ except ImportError:
 from gendiff.structured_dicts import (
     find_structured_dict_by_key,
     get_key,
-    get_value,
     set_status,
     set_value,
     is_dict,
@@ -73,27 +72,31 @@ def compare_values(value1, value2):
     return values, status
 
 
+def compare_dicts(tree, obj1, obj2, is_dict1, is_dict2, get_new=False):
+    if is_dict1:
+        for key1, value1 in obj1.items():
+            value2 = obj2.get(key1) if is_dict2 else obj2
+            if not get_new:
+                node = compare(value1, value2, root=key1)
+                tree.extend(node)
+            elif value2 is None:
+                node = compare(value2, value1, root=key1)
+                tree.extend(node)
+
+
 def compare(obj1, obj2, root=None):
     tree = []
     is_dict1 = is_dict(obj1)
     is_dict2 = is_dict(obj2)
-    if not (is_dict1 or is_dict2 or not root):
-        values_type = 'children' if is_dict1 or is_dict2 else 'values'
+    are_dict1_or_dict2 = is_dict1 or is_dict2
+    if not are_dict1_or_dict2 and root:
+        values_type = 'children' if are_dict1_or_dict2 else 'values'
         values, status = compare_values(obj1, obj2)
         add_to_tree(tree, root, values_type, values, status)
         return tree
 
-    for key1, value1 in obj1.items():
-        value2 = obj2.get(key1) if is_dict2 else obj2
-        node = compare(value1, value2, root=key1)
-        tree.extend(node)
-
-    if is_dict2:
-        for key2, value2 in obj2.items():
-            value1 = obj1.get(key2) if is_dict1 else obj1
-            if value1 is None:
-                node = compare(value1, value2, root=key2)
-                tree.extend(node)
+    compare_dicts(tree, obj1, obj2, is_dict1, is_dict2)
+    compare_dicts(tree, obj2, obj1, is_dict2, is_dict1, get_new=True)
 
     return tree
 

@@ -107,22 +107,15 @@ combinations = product(structure_types, file_types, formatter)
 
 
 fixtures_path = 'tests/fixtures'
-result_diff1_path = os.path.join(fixtures_path, 'result_diffs1.txt')
-result_diff2_path = os.path.join(fixtures_path, 'result_diffs2.txt')
-result_diff3_path = os.path.join(fixtures_path, 'result_diffs3.txt')
-result_diff4_path = os.path.join(fixtures_path, 'result_diffs4.txt')
-result_diffs1 = open(result_diff1_path, 'r', encoding='utf8').read()
-result_diffs2 = open(result_diff2_path, 'r', encoding='utf8').read()
-result_diffs3 = open(result_diff3_path, 'r', encoding='utf8').read()
-result_diffs4 = open(result_diff4_path, 'r', encoding='utf8').read()
+
 
 @pytest.mark.parametrize('structure_type, file_type, formatter', combinations)
 def test_generate_diff_from_jsons(structure_type, file_type, formatter):
     file1 = os.path.join(fixtures_path, structure_type,
                          file_type, f'file1.{file_type}')
-    file2 = os.path.join(fixtures_path, structure_type,
-                         file_type, f'file2.{file_type}')
     file3 = os.path.join(fixtures_path, structure_type,
+                         file_type, f'file2.{file_type}')
+    file2 = os.path.join(fixtures_path, structure_type,
                          file_type, f'file3.{file_type}')
 
     result_diff1_path = os.path.join(fixtures_path,

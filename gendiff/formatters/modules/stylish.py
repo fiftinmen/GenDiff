@@ -1,8 +1,4 @@
 from gendiff.structured_dicts import (
-    get_key,
-    get_status,
-    get_value,
-    is_tree,
     is_list,
     yield_tree_items,
     FILLER_TEMPLATE,
@@ -67,7 +63,6 @@ def generate_view(node, filler=FILLER_TEMPLATE, level=DEFAULT_LEVEL):
 
 
 def stylish(tree, filler=FILLER_TEMPLATE):
-    print(tree)
     return [DICTIONARY_START] \
         + [generate_view(node, filler)
            for node in yield_tree_items(tree)] \
