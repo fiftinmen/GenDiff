@@ -11,7 +11,7 @@ from gendiff.structured_dicts import (
     get_value,
     set_status,
     set_value,
-    tree,
+    is_dict,
     is_tree,
     is_list,
     yield_tree_items,
@@ -53,15 +53,48 @@ def compare_trees(tree1, tree2):
     return tree1
 
 
-def compare(dict1, dict2):
-    tree1 = tree(dict1, status=STATUSES['old'])
-    if not dict2 or len(dict2) == 0:
-        return tree1
-    tree2 = tree(dict2, status=STATUSES['new'])
-    if not dict1 or len(dict1) == 0:
-        return tree2
-    compare_trees(tree1, tree2)
-    return tree1
+def add_to_tree(tree, key, values_type, values, status):
+    tree.append({'key': key, values_type: values, 'status': status})
+
+
+def compare_values(value1, value2):
+    if value1 == value2:
+        values = value1
+        status = STATUSES['same']
+    elif value2 and value1:
+        values = {'old': value1, 'new': value2}
+        status = STATUSES['changed']
+    elif value2:
+        values = value2
+        status = STATUSES['added']
+    else:
+        values = value1
+        status = STATUSES['removed']
+    return values, status
+
+
+def compare(obj1, obj2, root=None):
+    tree = []
+    is_dict1 = is_dict(obj1)
+    is_dict2 = is_dict(obj2)
+    if not (is_dict1 and is_dict2 or root):
+        values_type = 'children' if is_dict1 or is_dict2 else 'values'
+        values, status = compare_plain(obj1, obj2)
+        add_to_tree(tree, root, values_type, values, status)
+        return tree
+
+    for key1, value1 in obj1.items():
+        value2 = obj2.get(key1) if is_dict2 else obj2
+        node = compare(value1, value2, root=key1)
+        tree.extend(node)
+
+    if is_dict2:
+        for key2, value2 in obj2.items():
+            value1 = obj1.get(key2) if is_dict1 else obj1
+            node = compare(value1, value2, root=key1)
+            tree.extend(node)
+
+    return tree
 
 
 def generate_diff(first_file, second_file, formatter=stylish):
