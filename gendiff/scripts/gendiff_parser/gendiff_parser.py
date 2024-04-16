@@ -57,6 +57,7 @@ def add_to_tree(tree, key, values_type, values, status):
 
 
 def compare_values(value1, value2):
+    values_type = 'children' if is_dict(value1) or is_dict(value2) else 'values'
     if value1 == value2:
         values = value1
         status = STATUSES['same']
@@ -69,34 +70,34 @@ def compare_values(value1, value2):
     else:
         values = value1
         status = STATUSES['removed']
-    return values, status
+    return values_type, values, status
 
 
-def compare_dicts(tree, obj1, obj2, is_dict1, is_dict2, get_new=False):
-    if is_dict1:
-        for key1, value1 in obj1.items():
-            value2 = obj2.get(key1) if is_dict2 else obj2
-            if not get_new:
-                node = compare(value1, value2, root=key1)
-                tree.extend(node)
-            elif value2 is None:
-                node = compare(value2, value1, root=key1)
-                tree.extend(node)
+
+def get_value(obj, key):
+    return obj.get(key) if is_dict(obj) else obj
+
+
+def compare_dicts(tree, obj1, obj2, get_new=False):
+    for key1, value1 in obj1.items():
+        value2 = get_value(obj2, key1)
+        if not get_new:
+            tree.extend(compare(value1, value2, root=key1))
+        elif value2 is None:
+            tree.extend(compare(value2, value1, root=key1))
 
 
 def compare(obj1, obj2, root=None):
     tree = []
-    is_dict1 = is_dict(obj1)
-    is_dict2 = is_dict(obj2)
-    are_dict1_or_dict2 = is_dict1 or is_dict2
-    if not are_dict1_or_dict2 and root:
-        values_type = 'children' if are_dict1_or_dict2 else 'values'
-        values, status = compare_values(obj1, obj2)
+    if not is_dict(obj1) and not is_dict(obj2) and root:
+        values_type, values, status = compare_values(obj1, obj2)
         add_to_tree(tree, root, values_type, values, status)
         return tree
 
-    compare_dicts(tree, obj1, obj2, is_dict1, is_dict2)
-    compare_dicts(tree, obj2, obj1, is_dict2, is_dict1, get_new=True)
+    if is_dict(obj1):
+        compare_dicts(tree, obj1, obj2)
+    if is_dict(obj2):
+        compare_dicts(tree, obj2, obj1, get_new=True)
 
     return tree
 
