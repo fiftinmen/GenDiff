@@ -1,14 +1,11 @@
 from gendiff.structured_dicts import (
-    get_key,
-    get_status,
-    get_value,
-    yield_changes_from_tree_items,
+    get_values_type,
     is_list,
     STATUSES
 )
 
 
-CHANGES = {
+CHANGES_COMMENTS = {
     '+': 'added with value: {}',
     '-': 'removed',
     '-+': "updated. From {} to {}"
@@ -27,20 +24,35 @@ def format(value):
     }.get(str(value), str(value))
 
 
-def generate_view(object):
-    length = len(object)
-    key = get_key(object[0])
-    status = get_status(object[0])
-    value1 = format(get_value(object[0]))
-    value2 = None
-    if length == 2:
+def generate_view(node, key, status, values):
+    old_value = format(values)
+    new_value = None
+    if status == STATUSES['changed']:
+        old_value = format(values.get('old'))
+        new_value = format(values.get('new'))
         status = STATUSES['old'] + STATUSES['new']
-        value2 = format(get_value(object[1]))
     if status != STATUSES['same']:
-        return f"Property '{key}' was {CHANGES[status].format(value1, value2)}"
+        return [f"Property '{key}' was {CHANGES_COMMENTS[status].format(old_value, new_value)}"]
+
+
+def handle_node(node, parent=None):
+    values_type = get_values_type(node)
+    key = node.get('key')
+    full_key = f'{parent}.{key}' if parent else key
+    values = node.get(values_type)
+    status = node.get('status')
+    views = []
+    if is_list(values) and status == STATUSES['same']:
+        for sub_node in values:
+            views.extend(handle_node(sub_node, full_key))
+    elif view := generate_view(node, full_key, status, values):
+        views.extend(view)
+    return views
 
 
 def plain(tree):
-    return [view
-            for pair in yield_changes_from_tree_items(tree)
-            if (view := generate_view(pair))]
+    views = []
+    for node in tree:
+        views.extend(handle_node(node))
+    print(views)
+    return views

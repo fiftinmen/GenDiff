@@ -17,6 +17,21 @@ def is_dict(value):
     return isinstance(value, dict)
 
 
+def get_value_by_key(obj, key):
+    if is_dict(obj):
+        return obj.get(key) if key in obj.keys() else nothing
+    else:
+        return obj
+
+
+def nothing():
+    return
+
+
+def get_values_type(node):
+    return 'values' if 'values' in node.keys() else 'children'
+
+
 def is_valid_structured_dict(value):
     if not is_dict(value) or len(value) < 2 or len(value) > 3:
         return False
@@ -154,4 +169,5 @@ def sort_tree(tree):
         value = values if values is not None else children
         if is_list(value):
             value.sort(key=sort_tree)
-        return get_key(tree)
+        key = tree.get('key')
+        return key if key is not None else inf

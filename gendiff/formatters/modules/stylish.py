@@ -1,10 +1,9 @@
 from gendiff.structured_dicts import (
     is_list,
-    yield_tree_items,
     FILLER_TEMPLATE,
     DEFAULT_LEVEL,
     STATUSES,
-    is_dict
+    get_values_type
 )
 
 
@@ -24,46 +23,62 @@ def generate_line(filler, level, status, key, value):
     return (f'{filler * level}{status} {key}: {value}')
 
 
+def generate_plain_view(node, key, status, filler, level):
+    return generate_line(filler, level, status, key, format(node))
+
+
+def generate_nested_view(tree, key, status, filler, level):
+    nested_view = "\n".join(
+        view for node in tree
+        if (view := generate_view(node, filler, level + 2))
+    )
+    start = end = ''
+    if (key and status) is not None:
+        start = f'{filler * level}{status} {key}: {DICTIONARY_START}\n'
+        end = f'{filler * (level+1)}{DICTIONARY_END}'
+    return f'{start}{nested_view}\n{end}'
+
+
+def generate_changed_view(node, key, filler, level):
+    old_value = node.get('old')
+    new_value = node.get('new')
+    statuses = ('removed', 'added')
+    node = [old_value, new_value]
+    view = []
+    for status, current_value in zip(statuses, (old_value, new_value)):
+        if is_list(current_value):
+            current_view = generate_nested_view(current_value,
+                                                key,
+                                                STATUSES[status],
+                                                filler,
+                                                level)
+        else:
+            current_view = generate_line(filler, level,
+                                         STATUSES[status], key,
+                                         format(current_value))
+        view.append(current_view)
+    return '\n'.join(view)
+
+
 def generate_view(node, filler=FILLER_TEMPLATE, level=DEFAULT_LEVEL):
-    view = ''
+    if is_list(node):
+        return generate_nested_view(node, None, None, filler, level)
+
     status = node.get('status')
     key = node.get('key')
-    values = node.get('values')
-    children = node.get('children')
-    value = values if values is not None else children
-    if not is_list(value):
-        formatted_value = format(value)
-        if status in {STATUSES['same'], STATUSES['removed'], STATUSES['added']}:
-            current_view = generate_line(filler, level,
-                                         status, key, formatted_value)
-            return current_view
-        elif status == STATUSES['changed']:
-            old_value = value.get('old')
-            new_value = value.get('new')
-            values = [old_value, new_value]
-            view = []
-            for i, current_value in enumerate(values):
-                if not is_list(current_value):
-                    current_view = generate_line(filler, level,
-                                                 STATUSES['changed'][i], key,
-                                                 format(current_value))
-                else:
-                    current_view = generate_view(current_value,
-                                                 filler,
-                                                 level)
-                view.append(current_view)
-            return '\n'.join(view)
+    values_type = get_values_type(node)
+    values = node.get(values_type)
+
+    if status == STATUSES['changed']:
+        return generate_changed_view(values, key, filler, level)
+    elif is_list(values):
+        return generate_nested_view(values, key, status, filler, level)
     else:
-        nested_view = '\n'.join([generate_view(atom, filler, level + 2)
-                                for atom in yield_tree_items(value)])
-        view = (f'{filler * level}{status} {key}: {DICTIONARY_START}\n'
-                f'{nested_view}\n'
-                f'{filler * (level+1)}{DICTIONARY_END}')
-        return view
+        return generate_plain_view(values, key, status, filler, level)
 
 
 def stylish(tree, filler=FILLER_TEMPLATE):
-    return [DICTIONARY_START] \
-        + [generate_view(node, filler)
-           for node in yield_tree_items(tree)] \
-        + [DICTIONARY_END]
+    return [DICTIONARY_START,
+            *[view for node in tree
+              if (view := generate_view(node, filler)) is not None],
+            DICTIONARY_END]

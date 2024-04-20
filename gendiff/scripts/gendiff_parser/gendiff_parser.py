@@ -6,16 +6,12 @@ try:
 except ImportError:
     from yaml import YAMLLoader
 from gendiff.structured_dicts import (
-    find_structured_dict_by_key,
-    get_key,
-    set_status,
-    set_value,
     is_dict,
-    is_tree,
     is_list,
-    yield_tree_items,
+    get_value_by_key,
     sort_tree,
     STATUSES,
+    nothing
 )
 from gendiff.formatters import stylish, plain, json_formatter
 
@@ -26,45 +22,27 @@ FORMATTERS = {
 }
 
 
-def parse_dict_list(tree_, formatter=stylish):
-    lines = formatter(tree_)
+def parse_dict_list(tree, formatter=stylish):
+    lines = formatter(tree)
     return '\n'.join(lines) if is_list(lines) else lines
 
 
-def compare_trees(tree1, tree2):
-    for structured_dict2 in yield_tree_items(tree2):
-        key2 = get_key(structured_dict2)
-        value2 = get_value(structured_dict2)
-        if structured_dict1 := find_structured_dict_by_key(key2, tree1):
-            value1 = get_value(structured_dict1)
-            if value1 == value2:
-                set_status(structured_dict1, status=STATUSES['same'])
-            elif is_tree(value1) and is_tree(value2):
-                set_status(structured_dict1, status=STATUSES['same'])
-                set_value(structured_dict1, compare(value1, value2))
-            else:
-                set_status(structured_dict1, STATUSES['old'])
-                set_status(structured_dict2, STATUSES['new'])
-                tree1.append(structured_dict2)
-        else:
-            set_status(structured_dict2, STATUSES['new'])
-            tree1.append(structured_dict2)
-    return tree1
+def generate_node(key, values_type, values, status):
+    return {'key': key, values_type: values, 'status': status}
 
 
-def add_to_tree(tree, key, values_type, values, status):
-    tree.append({'key': key, values_type: values, 'status': status})
-
-
-def compare_values(value1, value2):
-    values_type = 'children' if is_dict(value1) or is_dict(value2) else 'values'
+def compare_objects(value1, value2):
+    is_dict1 = is_dict(value1)
+    is_dict2 = is_dict(value2)
+    values_type = 'children' if is_dict1 or is_dict2 else 'values'
     if value1 == value2:
         values = value1
         status = STATUSES['same']
-    elif value2 is not None and value1 is not None:
+    elif value1 is not nothing and value2 is not nothing:
         values = {'old': value1, 'new': value2}
-        status = STATUSES['changed']
-    elif value2 is not None:
+        status = STATUSES['same'] if is_dict1 and is_dict2 \
+            else STATUSES['changed']
+    elif value1 is nothing and value2 is not nothing:
         values = value2
         status = STATUSES['added']
     else:
@@ -73,33 +51,76 @@ def compare_values(value1, value2):
     return values_type, values, status
 
 
+def handle_non_dict_comparison(obj1, obj2, get_old, children_status):
+    if not is_dict(obj1):
+        return []
+    if not is_dict(obj2) and obj2 is not nothing:
+        return {
+            'new': obj2,
+            'old': compare_nested_objects(obj1, obj1, get_old, children_status)
+        }
+    return None
 
-def get_value(obj, key):
-    return obj.get(key) if is_dict(obj) else obj
 
-
-def compare_dicts(tree, obj1, obj2, get_new=False):
+def compare_nested_objects(obj1, obj2, get_old=True, children_status=STATUSES['same']):
+    result = handle_non_dict_comparison(obj1, obj2, get_old, children_status)
+    if result is not None:
+        return result
+    node = []
     for key1, value1 in obj1.items():
-        value2 = get_value(obj2, key1)
-        if not get_new:
-            tree.extend(compare(value1, value2, root=key1))
-        elif value2 is None:
-            tree.extend(compare(value2, value1, root=key1))
+        value2 = get_value_by_key(obj2, key1)
+        if get_old:
+            node.extend(compare(value1, value2, parent=key1, children_status=children_status))
+        elif value2 is nothing:
+            node.extend(compare(value2, value1, parent=key1, children_status=children_status))
+    return node
 
 
-def compare(obj1, obj2, root=None):
+def add_node_to_tree(node, new_node):
+    if is_list(node):
+        if is_list(new_node):
+            node.extend(new_node)
+        else:
+            node.append(new_node)
+        return node
+
+
+def generate_next_children_status(parent, status, children_status):
+    if parent is nothing:
+        return None
+    elif status != STATUSES['same']:
+        return STATUSES['same']
+    else:
+        return children_status
+
+
+def compare(obj1, obj2, parent=nothing, children_status=None):
     tree = []
-    if not is_dict(obj1) and not is_dict(obj2) and root:
-        values_type, values, status = compare_values(obj1, obj2)
-        add_to_tree(tree, root, values_type, values, status)
-        return tree
+    values_type, values, status = compare_objects(obj1, obj2)
+    next_children_status = generate_next_children_status(
+        parent,
+        status,
+        children_status
+    )
+    current_status = children_status or status
 
-    if is_dict(obj1):
-        compare_dicts(tree, obj1, obj2)
-    if is_dict(obj2):
-        compare_dicts(tree, obj2, obj1, get_new=True)
+    if values_type == 'values':
+        node = generate_node(parent, values_type,
+                             values,
+                             current_status)
+        return add_node_to_tree(tree, node)
 
-    return tree
+    node = compare_nested_objects(obj1, obj2,
+                                  children_status=next_children_status)
+    new_node = compare_nested_objects(obj2, obj1,
+                                      children_status=next_children_status,
+                                      get_old=False)
+    add_node_to_tree(node, new_node)
+
+    if parent is not nothing:
+        node = generate_node(parent, values_type, node,
+                             children_status or current_status)
+    return add_node_to_tree(tree, node)
 
 
 def generate_diff(first_file, second_file, formatter=stylish):
@@ -114,8 +135,7 @@ def generate_diff(first_file, second_file, formatter=stylish):
         dict1, dict2 = loaders[ext1](file1), loaders[ext2](file2)
     result = compare(dict1, dict2)
     sort_tree(result)
-    result = parse_dict_list(result, formatter)
-    return result
+    return parse_dict_list(result, formatter)
 
 
 def gendiff_parser():
