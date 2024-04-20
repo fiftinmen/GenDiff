@@ -7,5 +7,6 @@ dist/
 coverage.xml
 .pytest_cache/
 /demos
+/tests/fixtures/1
 .vscode
 .sourcery.yaml

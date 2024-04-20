@@ -6,7 +6,7 @@ from gendiff.scripts.gendiff_parser.gendiff_parser import (
     FORMATTERS
 )
 
-STRUCTURE_TYPES = ['plain_', 'nested']
+STRUCTURE_TYPES = ['plain', 'nested']
 FILE_TYPES = ['json']
 FORMATTER_ = ['stylish', 'plain']
 TESTS = [['file1', 'file2', 'result_diffs1.txt'],
@@ -16,14 +16,17 @@ TESTS = [['file1', 'file2', 'result_diffs1.txt'],
 TEST_FILE1 = 0
 TEST_FILE2 = 1
 RESULT_FILE = 2
-COUNT_OF_TESTS = {'stylish': 4, 'plain': 1}
+COUNT_OF_TESTS = {'stylish': 4, 'plain': 1, 'json': 1}
 TESTS_FOR_STYLISH = product(STRUCTURE_TYPES, FILE_TYPES, ['stylish'],
                             range(COUNT_OF_TESTS['stylish']))
 TESTS_FOR_PLAIN = product(STRUCTURE_TYPES, FILE_TYPES, ['plain'],
                           range(COUNT_OF_TESTS['plain']))
-TEST_COMBINATIONS = list(TESTS_FOR_STYLISH) + list(TESTS_FOR_PLAIN)
+TESTS_FOR_JSON = product(STRUCTURE_TYPES, FILE_TYPES, ['json'],
+                          range(COUNT_OF_TESTS['json']))
+TEST_COMBINATIONS = list(TESTS_FOR_STYLISH) + list(TESTS_FOR_PLAIN) + \
+    list(TESTS_FOR_JSON)
 FIXTURES_PATH = 'tests/fixtures'
-
+FORMATTERS_FOLDER = 'formatters'
 
 @pytest.mark.parametrize('structure_type, file_type, formatter, test_number',
                          TEST_COMBINATIONS)
@@ -38,7 +41,9 @@ def test_generate_diff_from_jsons(structure_type, file_type, formatter,
     file2 = os.path.join(FIXTURES_PATH, structure_type,
                          file_type, f'{filename2}.{file_type}')
     result_diff1_path = os.path.join(FIXTURES_PATH,
-                                     structure_type, formatter,
+                                     structure_type,
+                                     FORMATTERS_FOLDER,
+                                     formatter,
                                      result_filename)
     result = open(result_diff1_path, 'r', encoding='utf8').read().strip()
 
