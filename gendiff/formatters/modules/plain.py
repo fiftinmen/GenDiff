@@ -1,4 +1,4 @@
-from gendiff.structured_dicts import (
+from gendiff.commons import (
     get_values_type,
     is_list,
     STATUSES

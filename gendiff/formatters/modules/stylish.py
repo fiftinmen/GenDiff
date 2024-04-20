@@ -1,4 +1,4 @@
-from gendiff.structured_dicts import (
+from gendiff.commons import (
     is_list,
     FILLER_TEMPLATE,
     DEFAULT_LEVEL,

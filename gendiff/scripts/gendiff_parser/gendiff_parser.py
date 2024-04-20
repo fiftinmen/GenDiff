@@ -1,17 +1,17 @@
 from argparse import RawTextHelpFormatter, ArgumentParser
 import json
+from math import inf
 from yaml import load as YAMLload
 try:
     from yaml import CLoader as YAMLLoader
 except ImportError:
     from yaml import YAMLLoader
-from gendiff.structured_dicts import (
+from gendiff.commons import (
     is_dict,
     is_list,
     get_value_by_key,
-    sort_tree,
     STATUSES,
-    nothing
+    Nothing
 )
 from gendiff.formatters import stylish, plain, json_formatter
 
@@ -20,6 +20,24 @@ FORMATTERS = {
     'plain': plain,
     'json': json_formatter
 }
+
+
+def sort_tree(tree):
+    if is_list(tree):
+        tree.sort(key=sort_tree)
+        return inf
+    if is_dict(tree):
+        return sort_dict(tree)
+
+
+def sort_dict(tree):
+    values = tree.get('values')
+    children = tree.get('children')
+    value = values if values is not None else children
+    if is_list(value):
+        value.sort(key=sort_tree)
+    key = tree.get('key')
+    return key if key is not None else inf
 
 
 def parse_dict_list(tree, formatter=stylish):
@@ -38,11 +56,11 @@ def compare_objects(value1, value2):
     if value1 == value2:
         values = value1
         status = STATUSES['same']
-    elif value1 is not nothing and value2 is not nothing:
+    elif value1 is not Nothing and value2 is not Nothing:
         values = {'old': value1, 'new': value2}
         status = STATUSES['same'] if is_dict1 and is_dict2 \
             else STATUSES['changed']
-    elif value1 is nothing and value2 is not nothing:
+    elif value1 is Nothing and value2 is not Nothing:
         values = value2
         status = STATUSES['added']
     else:
@@ -54,7 +72,7 @@ def compare_objects(value1, value2):
 def handle_non_dict_comparison(obj1, obj2, get_old, children_status):
     if not is_dict(obj1):
         return []
-    if not is_dict(obj2) and obj2 is not nothing:
+    if not is_dict(obj2) and obj2 is not Nothing:
         return {
             'new': obj2,
             'old': compare_nested_objects(obj1, obj1, get_old, children_status)
@@ -71,7 +89,7 @@ def compare_nested_objects(obj1, obj2, get_old=True, children_status=STATUSES['s
         value2 = get_value_by_key(obj2, key1)
         if get_old:
             node.extend(compare(value1, value2, parent=key1, children_status=children_status))
-        elif value2 is nothing:
+        elif value2 is Nothing:
             node.extend(compare(value2, value1, parent=key1, children_status=children_status))
     return node
 
@@ -86,7 +104,7 @@ def add_node_to_tree(node, new_node):
 
 
 def generate_next_children_status(parent, status, children_status):
-    if parent is nothing:
+    if parent is Nothing:
         return None
     elif status != STATUSES['same']:
         return STATUSES['same']
@@ -94,7 +112,7 @@ def generate_next_children_status(parent, status, children_status):
         return children_status
 
 
-def compare(obj1, obj2, parent=nothing, children_status=None):
+def compare(obj1, obj2, parent=Nothing, children_status=None):
     tree = []
     values_type, values, status = compare_objects(obj1, obj2)
     next_children_status = generate_next_children_status(
@@ -117,7 +135,7 @@ def compare(obj1, obj2, parent=nothing, children_status=None):
                                       get_old=False)
     add_node_to_tree(node, new_node)
 
-    if parent is not nothing:
+    if parent is not Nothing:
         node = generate_node(parent, values_type, node,
                              children_status or current_status)
     return add_node_to_tree(tree, node)
