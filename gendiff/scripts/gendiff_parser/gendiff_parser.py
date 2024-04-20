@@ -70,8 +70,13 @@ def compare_objects(value1, value2):
 
 
 def handle_non_dict_comparison(obj1, obj2, get_old, children_status):
-    if not is_dict(obj1):
+    if obj1 is Nothing:
         return []
+    if not is_dict(obj1) and obj1 is not Nothing and is_dict(obj2):
+        return {
+            'old': obj1,
+            'new': compare_nested_objects(obj2, obj2, get_old, children_status)
+        }
     if not is_dict(obj2) and obj2 is not Nothing:
         return {
             'new': obj2,

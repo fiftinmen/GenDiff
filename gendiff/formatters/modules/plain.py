@@ -28,6 +28,8 @@ def generate_view(node, key, status, values):
     old_value = format(values)
     new_value = None
     if status == STATUSES['changed']:
+        if is_list(values):
+            values = values[0]
         old_value = format(values.get('old'))
         new_value = format(values.get('new'))
         status = STATUSES['old'] + STATUSES['new']
