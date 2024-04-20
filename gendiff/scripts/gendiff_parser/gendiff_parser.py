@@ -40,8 +40,8 @@ def sort_dict(tree):
     return key if key is not None else inf
 
 
-def parse_dict_list(tree, formatter=stylish):
-    lines = formatter(tree)
+def parse_dict_list(tree, formatter='stylish'):
+    lines = FORMATTERS[formatter](tree)
     return '\n'.join(lines) if is_list(lines) else lines
 
 
@@ -146,7 +146,7 @@ def compare(obj1, obj2, parent=Nothing, children_status=None):
     return add_node_to_tree(tree, node)
 
 
-def generate_diff(first_file, second_file, formatter=stylish):
+def generate_diff(first_file, second_file, formatter='stylish'):
     loaders = {
         'json': json.load,
         'yml': lambda f: YAMLload(f, YAMLLoader),

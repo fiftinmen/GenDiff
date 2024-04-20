@@ -63,7 +63,7 @@ def generate_changed_view(node, key, filler, level):
 
 
 def generate_view(node, filler=FILLER_TEMPLATE, level=DEFAULT_LEVEL):
-    if is_list(node) and len(node)>0:
+    if is_list(node):
         return generate_nested_view(node, None, None, filler, level)
     status = node.get('status')
     key = node.get('key')

@@ -47,4 +47,4 @@ def test_generate_diff_from_jsons(structure_type, file_type, formatter,
                                      result_filename)
     result = open(result_diff1_path, 'r', encoding='utf8').read().strip()
 
-    assert generate_diff(file1, file2, FORMATTERS[formatter]) == result
+    assert generate_diff(file1, file2, formatter) == result
