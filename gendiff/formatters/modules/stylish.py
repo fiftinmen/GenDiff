@@ -40,8 +40,6 @@ def generate_nested_view(tree, key, status, filler, level):
 
 
 def generate_changed_view(node, key, filler, level):
-    if is_list(node):
-        node = node[0]
     old_value = node.get('old')
     new_value = node.get('new')
     statuses = ('removed', 'added')
