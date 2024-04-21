@@ -17,11 +17,10 @@ def format(value):
         return '[complex value]'
     stringified_value = str(value)
     return {
-        stringified_value: f"'{stringified_value}'",
-        'True': 'true',
-        'False': 'false',
-        'None': 'null',
-    }.get(str(value), str(value))
+        str: f"'{stringified_value}'",
+        bool: str(value).lower(),
+        type(None): str(value).lower(),
+    }.get(type(value), str(value))
 
 
 def generate_view(node, key, status, values):
