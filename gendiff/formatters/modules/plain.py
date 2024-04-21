@@ -18,8 +18,8 @@ def format(value):
     stringified_value = str(value)
     return {
         str: f"'{stringified_value}'",
-        bool: str(value).lower(),
-        type(None): str(value).lower(),
+        bool: stringified_value.lower(),
+        type(None): 'null',
     }.get(type(value), str(value))
 
 
