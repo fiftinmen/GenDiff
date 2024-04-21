@@ -178,6 +178,6 @@ def gendiff_parser():
     args = parser.parse_args()
     first_file = args.first_file
     second_file = args.second_file
-    formatter = FORMATTERS[args.format]
+    formatter = args.format
     diff = generate_diff(first_file, second_file, formatter)
     print(diff)
