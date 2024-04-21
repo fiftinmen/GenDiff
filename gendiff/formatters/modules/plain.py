@@ -55,5 +55,4 @@ def plain(tree):
     views = []
     for node in tree:
         views.extend(handle_node(node))
-    print(views)
     return views
