@@ -3,7 +3,6 @@ import os
 from itertools import product
 from gendiff.scripts.gendiff_parser.gendiff_parser import (
     generate_diff,
-    FORMATTERS
 )
 
 STRUCTURE_TYPES = ['plain', 'nested']
@@ -17,21 +16,20 @@ TEST_FILE1 = 0
 TEST_FILE2 = 1
 RESULT_FILE = 2
 COUNT_OF_TESTS = {'stylish': 4, 'plain': 1, 'json': 1}
-TESTS_FOR_STYLISH = product(STRUCTURE_TYPES, FILE_TYPES, ['stylish'],
-                            range(COUNT_OF_TESTS['stylish']))
-TESTS_FOR_PLAIN = product(STRUCTURE_TYPES, FILE_TYPES, ['plain'],
-                          range(COUNT_OF_TESTS['plain']))
-TESTS_FOR_JSON = product(STRUCTURE_TYPES, FILE_TYPES, ['json'],
-                          range(COUNT_OF_TESTS['json']))
-TEST_COMBINATIONS = list(TESTS_FOR_STYLISH) + list(TESTS_FOR_PLAIN) + \
-    list(TESTS_FOR_JSON)
+TESTS_FOR_STYLISH = list(product(STRUCTURE_TYPES, FILE_TYPES, ['stylish'],
+                                 range(COUNT_OF_TESTS['stylish'])))
+TESTS_FOR_PLAIN = list(product(STRUCTURE_TYPES, FILE_TYPES, ['plain'],
+                               range(COUNT_OF_TESTS['plain'])))
+TESTS_FOR_JSON = list(product(STRUCTURE_TYPES, FILE_TYPES, ['json'],
+                              range(COUNT_OF_TESTS['json'])))
+TEST_COMBINATIONS = TESTS_FOR_STYLISH + TESTS_FOR_PLAIN + TESTS_FOR_JSON
 FIXTURES_PATH = 'tests/fixtures'
 FORMATTERS_FOLDER = 'formatters'
 
+
 @pytest.mark.parametrize('structure_type, file_type, formatter, test_number',
                          TEST_COMBINATIONS)
-def test_generate_diff_from_jsons(structure_type, file_type, formatter,
-                                  test_number):
+def test_generate_diff(structure_type, file_type, formatter, test_number):
     filename1 = TESTS[test_number][TEST_FILE1]
     filename2 = TESTS[test_number][TEST_FILE2]
     result_filename = TESTS[test_number][RESULT_FILE]
@@ -46,5 +44,4 @@ def test_generate_diff_from_jsons(structure_type, file_type, formatter,
                                      formatter,
                                      result_filename)
     result = open(result_diff1_path, 'r', encoding='utf8').read().strip()
-
     assert generate_diff(file1, file2, formatter) == result

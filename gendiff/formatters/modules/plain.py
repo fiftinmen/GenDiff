@@ -33,7 +33,8 @@ def generate_view(node, key, status, values):
         new_value = format(values.get('new'))
         status = STATUSES['old'] + STATUSES['new']
     if status != STATUSES['same']:
-        return [f"Property '{key}' was {CHANGES_COMMENTS[status].format(old_value, new_value)}"]
+        return [f"Property '{key}' was "
+                f"{CHANGES_COMMENTS[status].format(old_value, new_value)}"]
 
 
 def handle_node(node, parent=None):

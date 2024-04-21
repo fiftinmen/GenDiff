@@ -85,7 +85,8 @@ def handle_non_dict_comparison(obj1, obj2, get_old, children_status):
     return None
 
 
-def compare_nested_objects(obj1, obj2, get_old=True, children_status=STATUSES['same']):
+def compare_nested_objects(obj1, obj2, get_old=True,
+                           children_status=STATUSES['same']):
     result = handle_non_dict_comparison(obj1, obj2, get_old, children_status)
     if result is not None:
         return result
@@ -93,9 +94,11 @@ def compare_nested_objects(obj1, obj2, get_old=True, children_status=STATUSES['s
     for key1, value1 in obj1.items():
         value2 = get_value_by_key(obj2, key1)
         if get_old:
-            node.extend(compare(value1, value2, parent=key1, children_status=children_status))
+            node.extend(compare(value1, value2, parent=key1,
+                                children_status=children_status))
         elif value2 is Nothing:
-            node.extend(compare(value2, value1, parent=key1, children_status=children_status))
+            node.extend(compare(value2, value1, parent=key1,
+                                children_status=children_status))
     return node
 
 

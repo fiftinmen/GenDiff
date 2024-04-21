@@ -35,7 +35,7 @@ def generate_nested_view(tree, key, status, filler, level):
     start = end = ''
     if (key and status) is not None:
         start = f'{filler * level}{status} {key}: {DICTIONARY_START}\n'
-        end = f'{filler * (level+1)}{DICTIONARY_END}'
+        end = f'{filler * (level + 1)}{DICTIONARY_END}'
     return f'{start}{nested_view}\n{end}'
 
 
