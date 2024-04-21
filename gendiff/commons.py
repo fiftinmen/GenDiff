@@ -23,11 +23,8 @@ def is_list(object):
     return isinstance(object, list)
 
 
-def get_value_by_key(obj, key):
-    if is_dict(obj):
-        return obj.get(key) if key in obj.keys() else Nothing
-    else:
-        return obj
+def get_value(obj, key):
+    return obj.get(key, Nothing) if is_dict(obj) else obj
 
 
 def get_values_type(node):

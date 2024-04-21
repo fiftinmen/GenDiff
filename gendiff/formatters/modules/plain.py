@@ -23,12 +23,10 @@ def format(value):
     }.get(type(value), str(value))
 
 
-def generate_view(node, key, status, values):
+def generate_view(key, status, values):
     old_value = format(values)
     new_value = None
     if status == STATUSES['changed']:
-        if is_list(values):
-            values = values[0]
         old_value = format(values.get('old'))
         new_value = format(values.get('new'))
         status = STATUSES['old'] + STATUSES['new']
@@ -47,7 +45,7 @@ def handle_node(node, parent=None):
     if is_list(values) and status == STATUSES['same']:
         for sub_node in values:
             views.extend(handle_node(sub_node, full_key))
-    elif view := generate_view(node, full_key, status, values):
+    elif view := generate_view(full_key, status, values):
         views.extend(view)
     return views
 

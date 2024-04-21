@@ -9,7 +9,7 @@ except ImportError:
 from gendiff.commons import (
     is_dict,
     is_list,
-    get_value_by_key,
+    get_value,
     STATUSES,
     Nothing
 )
@@ -92,7 +92,7 @@ def compare_nested_objects(obj1, obj2, get_old=True,
         return result
     node = []
     for key1, value1 in obj1.items():
-        value2 = get_value_by_key(obj2, key1)
+        value2 = get_value(obj2, key1)
         if get_old:
             node.extend(compare(value1, value2, parent=key1,
                                 children_status=children_status))
@@ -112,7 +112,7 @@ def add_node_to_tree(node, new_node):
 
 
 def generate_next_children_status(parent, status, children_status):
-    if parent is Nothing:
+    if parent is None:
         return None
     elif status != STATUSES['same']:
         return STATUSES['same']
@@ -120,7 +120,7 @@ def generate_next_children_status(parent, status, children_status):
         return children_status
 
 
-def compare(obj1, obj2, parent=Nothing, children_status=None):
+def compare(obj1, obj2, parent=None, children_status=None):
     tree = []
     values_type, values, status = compare_objects(obj1, obj2)
     next_children_status = generate_next_children_status(
@@ -143,7 +143,7 @@ def compare(obj1, obj2, parent=Nothing, children_status=None):
                                       get_old=False)
     add_node_to_tree(node, new_node)
 
-    if parent is not Nothing:
+    if parent is not None:
         node = generate_node(parent, values_type, node,
                              children_status or current_status)
     return add_node_to_tree(tree, node)
