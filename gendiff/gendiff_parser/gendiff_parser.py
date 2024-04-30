@@ -30,9 +30,6 @@ LOADERS = {
 
 
 def sort_nodes(tree):
-    if is_list(tree):
-        tree.sort(key=sort_nodes)
-        return inf
     if is_dict(tree):
         return sort_dict(tree)
 
