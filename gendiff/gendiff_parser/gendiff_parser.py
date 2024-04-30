@@ -165,7 +165,7 @@ def converse_file_to_dict(file, filename):
     return LOADERS[ext](file)
 
 
-def generate_diff(first_file, second_file, formatter):
+def generate_diff(first_file, second_file, formatter='stylish'):
     file1 = open_file(first_file)
     file2 = open_file(second_file)
     diff = sorted_tree(compare(converse_file_to_dict(file1, first_file),

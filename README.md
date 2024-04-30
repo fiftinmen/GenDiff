@@ -44,27 +44,28 @@ To build and install the package, follow these instructions:
 
 -  **JSON Files**:
 
-[View Demo](https://asciinema.org/a/fjDh58WngjdI4LxG26kBqA0Of)
+[![asciicast](https://asciinema.org/a/fjDh58WngjdI4LxG26kBqA0Of.svg)](https://asciinema.org/a/fjDh58WngjdI4LxG26kBqA0Of)
 
 -  **YAML Files**:
 
-[View Demo](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6)
+[![asciicast](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6.svg)](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6)
 
 -  **Mixed JSON and YAML**:
 
-[View Demo](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6)
+[![asciicast](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6.svg)](https://asciinema.org/a/NNzfS2hklqB9vUaw9jMQFStj6)
 
 -  **Nested JSONs**:
 
-[View Demo](https://asciinema.org/a/SLyry8tqav7eSo6scsCWHHhVm)
+[![asciicast](https://asciinema.org/a/SLyry8tqav7eSo6scsCWHHhVm.svg)](https://asciinema.org/a/SLyry8tqav7eSo6scsCWHHhVm)
+
 
 -  **Plain Formatter**:
 
-[View Demo](https://asciinema.org/a/rCZhbkuvZFfxOUaJUVmSQ7XFB)
+[![asciicast](https://asciinema.org/a/rCZhbkuvZFfxOUaJUVmSQ7XFB.svg)](https://asciinema.org/a/rCZhbkuvZFfxOUaJUVmSQ7XFB)
 
 -  **JSON Formatter**:
 
-[View Demo](https://asciinema.org/a/BQ6iP4bDgIQyGWaBI2qffUOvi)
+[![asciicast](https://asciinema.org/a/BQ6iP4bDgIQyGWaBI2qffUOvi.svg)](https://asciinema.org/a/BQ6iP4bDgIQyGWaBI2qffUOvi)
 
   
 
