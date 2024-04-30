@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from gendiff import gendiff_parser
+from gendiff.gendiff_parser.gendiff_parser import run_gendiff
 
 
 def main():
-    gendiff_parser()
+    run_gendiff()
     return
 
 

@@ -1,13 +1,12 @@
 import pytest
 import os
 from itertools import product
-from gendiff.scripts.gendiff_parser.gendiff_parser import (
+from gendiff.gendiff_parser.gendiff_parser import (
     generate_diff,
 )
 
 STRUCTURE_TYPES = ['plain', 'nested']
 FILE_TYPES = ['json']
-FORMATTER_ = ['stylish', 'plain']
 TESTS = [['file1', 'file2', 'result_diffs1.txt'],
          ['file1', 'file1', 'result_diffs2.txt'],
          ['file1', 'file3', 'result_diffs3.txt'],

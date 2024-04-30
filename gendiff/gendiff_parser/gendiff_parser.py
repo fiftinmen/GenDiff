@@ -1,4 +1,5 @@
 from argparse import RawTextHelpFormatter, ArgumentParser
+import copy
 import json
 from math import inf
 from yaml import load as YAMLload
@@ -13,60 +14,65 @@ from gendiff.commons import (
     STATUSES,
     Nothing
 )
-from gendiff.formatters import stylish, plain, json_formatter
+from gendiff.formatters import format_stylish, format_plain, format_to_json
 
 FORMATTERS = {
-    'stylish': stylish,
-    'plain': plain,
-    'json': json_formatter
+    'stylish': format_stylish,
+    'plain': format_plain,
+    'json': format_to_json
+}
+
+LOADERS = {
+    'json': json.load,
+    'yml': lambda f: YAMLload(f, YAMLLoader),
+    'yaml': lambda f: YAMLload(f, YAMLLoader)
 }
 
 
-def sort_tree(tree):
-    if is_list(tree):
-        tree.sort(key=sort_tree)
-        return inf
-    if is_dict(tree):
-        return sort_dict(tree)
+def sorted_tree(tree):
+    def sort_nodes(tree):
+        if is_list(tree):
+            tree.sort(key=sort_nodes)
+            return inf
+        if is_dict(tree):
+            return sort_dict(tree)
+
+    def sort_dict(tree):
+        values = tree.get('values')
+        children = tree.get('children')
+        value = values if values is not None else children
+        if is_list(value):
+            value.sort(key=sort_nodes)
+        key = tree.get('key')
+        return key if key is not None else inf
+
+    tree_copy = copy.deepcopy(tree)
+    tree_copy.sort(key=sort_nodes)
+    return tree_copy
 
 
-def sort_dict(tree):
-    values = tree.get('values')
-    children = tree.get('children')
-    value = values if values is not None else children
-    if is_list(value):
-        value.sort(key=sort_tree)
-    key = tree.get('key')
-    return key if key is not None else inf
+def generate_node(key, node_type, values, status):
+    return {'key': key, node_type: values, 'status': status}
 
 
-def parse_dict_list(tree, formatter='stylish'):
-    lines = FORMATTERS[formatter](tree)
-    return '\n'.join(lines) if is_list(lines) else lines
-
-
-def generate_node(key, values_type, values, status):
-    return {'key': key, values_type: values, 'status': status}
-
-
-def compare_objects(value1, value2):
-    is_dict1 = is_dict(value1)
-    is_dict2 = is_dict(value2)
-    values_type = 'children' if is_dict1 or is_dict2 else 'values'
-    if value1 == value2:
-        values = value1
+def compare_nodes(node1, node2):
+    is_dict1 = is_dict(node1)
+    is_dict2 = is_dict(node2)
+    node_type = 'children' if is_dict1 or is_dict2 else 'values'
+    if node1 == node2:
+        values = node1
         status = STATUSES['same']
-    elif value1 is not Nothing and value2 is not Nothing:
-        values = {'old': value1, 'new': value2}
+    elif node1 is not Nothing and node2 is not Nothing:
+        values = {'old': node1, 'new': node2}
         status = STATUSES['same'] if is_dict1 and is_dict2 \
             else STATUSES['changed']
-    elif value1 is Nothing and value2 is not Nothing:
-        values = value2
+    elif node1 is Nothing and node2 is not Nothing:
+        values = node2
         status = STATUSES['added']
     else:
-        values = value1
+        values = node1
         status = STATUSES['removed']
-    return values_type, values, status
+    return node_type, values, status
 
 
 def handle_non_dict_comparison(obj1, obj2, get_old, children_status):
@@ -103,15 +109,16 @@ def compare_nested_objects(obj1, obj2, get_old=True,
 
 
 def add_node_to_tree(node, new_node):
-    if is_list(node):
-        if is_list(new_node):
-            node.extend(new_node)
-        else:
-            node.append(new_node)
-        return node
+    if is_dict(node):
+        node = [node]
+    if is_list(new_node):
+        node.extend(new_node)
+    else:
+        node.append(new_node)
+    return node
 
 
-def generate_next_children_status(parent, status, children_status):
+def generate_future_children_status(parent, status, children_status):
     if parent is None:
         return None
     elif status != STATUSES['same']:
@@ -122,49 +129,51 @@ def generate_next_children_status(parent, status, children_status):
 
 def compare(obj1, obj2, parent=None, children_status=None):
     tree = []
-    values_type, values, status = compare_objects(obj1, obj2)
-    next_children_status = generate_next_children_status(
+    node_type, values, status = compare_nodes(obj1, obj2)
+    future_children_status = generate_future_children_status(
         parent,
         status,
         children_status
     )
     current_status = children_status or status
 
-    if values_type == 'values':
-        node = generate_node(parent, values_type,
+    if node_type == 'values':
+        node = generate_node(parent, node_type,
                              values,
                              current_status)
         return add_node_to_tree(tree, node)
 
     node = compare_nested_objects(obj1, obj2,
-                                  children_status=next_children_status)
+                                  children_status=future_children_status)
     new_node = compare_nested_objects(obj2, obj1,
-                                      children_status=next_children_status,
+                                      children_status=future_children_status,
                                       get_old=False)
     add_node_to_tree(node, new_node)
 
     if parent is not None:
-        node = generate_node(parent, values_type, node,
+        node = generate_node(parent, node_type, node,
                              children_status or current_status)
     return add_node_to_tree(tree, node)
 
 
-def generate_diff(first_file, second_file, formatter='stylish'):
-    loaders = {
-        'json': json.load,
-        'yml': lambda f: YAMLload(f, YAMLLoader),
-        'yaml': lambda f: YAMLload(f, YAMLLoader)
-    }
-    with open(first_file, 'r', encoding='utf-8') as file1, \
-            open(second_file, 'r', encoding='utf-8') as file2:
-        ext1, ext2 = first_file.split('.')[1], second_file.split('.')[1]
-        dict1, dict2 = loaders[ext1](file1), loaders[ext2](file2)
-    result = compare(dict1, dict2)
-    sort_tree(result)
-    return parse_dict_list(result, formatter)
+def open_file(filename):
+    return open(filename, 'r', encoding='utf-8')
 
 
-def gendiff_parser():
+def converse_file_to_dict(file, filename):
+    ext = filename.split('.')[-1]
+    return LOADERS[ext](file)
+
+
+def generate_diff(first_file, second_file, formatter):
+    file1 = open_file(first_file)
+    file2 = open_file(second_file)
+    diff = sorted_tree(compare(converse_file_to_dict(file1, first_file),
+                       converse_file_to_dict(file2, second_file)))
+    return FORMATTERS[formatter](sorted_tree(diff))
+
+
+def parse_args():
     parser = ArgumentParser(
         prog='gendiff',
         description='Compares two configuration files and shows a difference.',
@@ -173,14 +182,15 @@ def gendiff_parser():
     parser.add_argument('first_file')
     parser.add_argument('second_file')
     parser.add_argument('-f', '--format',
-                        dest='format',
+                        dest='formatter',
                         help='set format of output:\nstylish (default)',
                         default='stylish',
                         choices={'stylish', 'plain', 'json'}
                         )
-    args = parser.parse_args()
-    first_file = args.first_file
-    second_file = args.second_file
-    formatter = args.format
-    diff = generate_diff(first_file, second_file, formatter)
+    return parser.parse_args()
+
+
+def run_gendiff():
+    args = parse_args()
+    diff = generate_diff(args.first_file, args.second_file, args.formatter)
     print(diff)

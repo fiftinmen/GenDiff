@@ -27,5 +27,5 @@ def get_value(obj, key):
     return obj.get(key, Nothing) if is_dict(obj) else obj
 
 
-def get_values_type(node):
+def get_node_type(node):
     return 'values' if 'values' in node.keys() else 'children'

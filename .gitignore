@@ -10,3 +10,4 @@ coverage.xml
 /tests/fixtures/1
 .vscode
 .sourcery.yaml
+review.txt

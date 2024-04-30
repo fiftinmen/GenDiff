@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hexlet-code"
 version = "0.1.0"
-description = ""
+description = "Diff tool for comparing JSON and YAML files. Prints out differences in three formats: stylish (default; show all changed and unchanged contents and their inner structure; plain (shows only changes and hide unchanged nested contents); JSON (show all generated data in JSON format)."
 authors = ["fiftinmen <fiftin.men@gmail.com>"]
 readme = "README.md"
 packages = [

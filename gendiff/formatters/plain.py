@@ -1,18 +1,18 @@
 from gendiff.commons import (
-    get_values_type,
+    get_node_type,
     is_list,
     STATUSES
 )
 
 
-CHANGES_COMMENTS = {
+MESSAGES = {
     '+': 'added with value: {}',
     '-': 'removed',
     '-+': "updated. From {} to {}"
 }
 
 
-def format(value):
+def format_value(value):
     if is_list(value):
         return '[complex value]'
     stringified_value = str(value)
@@ -24,22 +24,21 @@ def format(value):
 
 
 def generate_view(key, status, values):
-    old_value = format(values)
+    old_value = format_value(values)
     new_value = None
     if status == STATUSES['changed']:
-        old_value = format(values.get('old'))
-        new_value = format(values.get('new'))
+        old_value = format_value(values.get('old'))
+        new_value = format_value(values.get('new'))
         status = STATUSES['old'] + STATUSES['new']
     if status != STATUSES['same']:
         return [f"Property '{key}' was "
-                f"{CHANGES_COMMENTS[status].format(old_value, new_value)}"]
+                f"{MESSAGES[status].format(old_value, new_value)}"]
 
 
 def handle_node(node, parent=None):
-    values_type = get_values_type(node)
     key = node.get('key')
     full_key = f'{parent}.{key}' if parent else key
-    values = node.get(values_type)
+    values = node.get(get_node_type(node))
     status = node.get('status')
     views = []
     if is_list(values) and status == STATUSES['same']:
@@ -50,8 +49,8 @@ def handle_node(node, parent=None):
     return views
 
 
-def plain(tree):
+def format_plain(tree):
     views = []
     for node in tree:
         views.extend(handle_node(node))
-    return views
+    return '\n'.join(views)
