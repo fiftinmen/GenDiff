@@ -29,23 +29,25 @@ LOADERS = {
 }
 
 
+def sort_nodes(tree):
+    if is_list(tree):
+        tree.sort(key=sort_nodes)
+        return inf
+    if is_dict(tree):
+        return sort_dict(tree)
+
+
+def sort_dict(tree):
+    values = tree.get('values')
+    children = tree.get('children')
+    value = values if values is not None else children
+    if is_list(value):
+        value.sort(key=sort_nodes)
+    key = tree.get('key')
+    return key if key is not None else inf
+
+
 def sorted_tree(tree):
-    def sort_nodes(tree):
-        if is_list(tree):
-            tree.sort(key=sort_nodes)
-            return inf
-        if is_dict(tree):
-            return sort_dict(tree)
-
-    def sort_dict(tree):
-        values = tree.get('values')
-        children = tree.get('children')
-        value = values if values is not None else children
-        if is_list(value):
-            value.sort(key=sort_nodes)
-        key = tree.get('key')
-        return key if key is not None else inf
-
     tree_copy = copy.deepcopy(tree)
     tree_copy.sort(key=sort_nodes)
     return tree_copy
@@ -55,17 +57,23 @@ def generate_node(key, node_type, values, status):
     return {'key': key, node_type: values, 'status': status}
 
 
+def get_node_type(node1, node2):
+    return 'children' if is_dict(node1) or is_dict(node2) else 'values'
+
+
+def get_status_of_changed_node(node1, node2):
+    return STATUSES['same'] if is_dict(node1) and is_dict(node2) \
+        else STATUSES['changed']
+
+
 def compare_nodes(node1, node2):
-    is_dict1 = is_dict(node1)
-    is_dict2 = is_dict(node2)
-    node_type = 'children' if is_dict1 or is_dict2 else 'values'
+    node_type = get_node_type(node1, node2)
     if node1 == node2:
         values = node1
         status = STATUSES['same']
     elif node1 is not Nothing and node2 is not Nothing:
         values = {'old': node1, 'new': node2}
-        status = STATUSES['same'] if is_dict1 and is_dict2 \
-            else STATUSES['changed']
+        status = get_status_of_changed_node(node1, node2)
     elif node1 is Nothing and node2 is not Nothing:
         values = node2
         status = STATUSES['added']
