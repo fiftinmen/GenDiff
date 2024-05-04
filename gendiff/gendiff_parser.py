@@ -2,16 +2,11 @@ from argparse import RawTextHelpFormatter, ArgumentParser
 import copy
 import json
 import os
-from math import inf
 from yaml import load as YAMLload
 try:
     from yaml import CLoader as YAMLLoader
 except ImportError:
     from yaml import YAMLLoader
-from gendiff.commons import (
-    get_value,
-    Nothing
-)
 from gendiff.formatters import (
     json_formatter,
     plain_formatter,
@@ -29,6 +24,10 @@ LOADERS = {
     '.yml': lambda f: YAMLload(f, YAMLLoader),
     '.yaml': lambda f: YAMLload(f, YAMLLoader)
 }
+
+
+def Nothing():
+    return
 
 
 def generate_node(key, node_type, values, status):
@@ -90,13 +89,18 @@ def handle_non_dict_comparison(obj1, obj2, get_old):
     return None
 
 
+def get_value(obj, key):
+    return obj.get(key, Nothing) if isinstance(obj, dict) else obj
+
+
 def compare_nested_objects(obj1, obj2, parent_status=None, get_old=True):
     result = handle_non_dict_comparison(obj1, obj2, get_old)
     if result is not None:
         return result
     node = []
+    is_dict2 = isinstance(obj2, dict)
     for key1, value1 in obj1.items():
-        value2 = get_value(obj2, key1)
+        value2 = obj2.get(key1, Nothing) if is_dict2 else obj2
         if get_old:
             node.extend(compare(value1, value2, parent=key1,
                                 parent_status=parent_status))
@@ -134,24 +138,16 @@ def compare(obj1, obj2, parent=None, parent_status=None):
     return add_node_to_tree(tree, node)
 
 
-def sort_nodes(tree):
-    if isinstance(tree, dict):
-        return sort_dict(tree)
-
-
 def sort_dict(tree):
-    values = tree.get('values')
-    children = tree.get('children')
-    value = values if values is not None else children
+    value = tree.get('values') or tree.get('children')
     if isinstance(value, list):
-        value.sort(key=sort_nodes)
-    key = tree.get('key')
-    return key if key is not None else inf
+        value.sort(key=sort_dict)
+    return tree.get('key')
 
 
 def sorted_tree(tree):
     tree_copy = copy.deepcopy(tree)
-    tree_copy.sort(key=sort_nodes)
+    tree_copy.sort(key=sort_dict)
     return tree_copy
 
 
@@ -159,15 +155,15 @@ def open_file(filename):
     return open(filename, 'r', encoding='utf-8')
 
 
-def converse_file_to_dict(file, filename):
-    ext = os.path.splitext(filename)[1]
-    return LOADERS[ext](file)
+def converse_file_to_dict(filename):
+    with open(filename) as file:
+        ext = os.path.splitext(filename)[1]
+        return LOADERS[ext](file)
 
 
-def generate_diff(first_file, second_file, formatter='stylish'):
-    with open(first_file) as file1, open(second_file) as file2:
-        diff = sorted_tree(compare(converse_file_to_dict(file1, first_file),
-                           converse_file_to_dict(file2, second_file)))
+def generate_diff(file1, file2, formatter='stylish'):
+    diff = sorted_tree(compare(converse_file_to_dict(file1),
+                               converse_file_to_dict(file2)))
     return FORMATTERS[formatter](diff)
 
 
