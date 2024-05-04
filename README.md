@@ -78,7 +78,7 @@ The tool represents differences in dictionaries accumulated in a list. Here's an
 	{
 		"key": "key1",
 		"values": "value1",
-		"status": " "
+		"status": "unchanged"
 	},
 	{
 		"key": "key2",
@@ -86,7 +86,7 @@ The tool represents differences in dictionaries accumulated in a list. Here's an
 			"old": "old_value",
 			"new": "new_value"
 		},
-	"status": "-+"
+	"status": "updated"
 	},
 	{
 		"key": "key3",
@@ -94,16 +94,14 @@ The tool represents differences in dictionaries accumulated in a list. Here's an
 				{
 					"key": "follow",
 					"values": false,
-					"status": " "
+					"status": "unchanged"
 				}
 			],
-		"status": " "
+		"status": "nested"
 	}
 ]
 ```
 Here:
 + the *key* is a name of an object originating from source files,
-+  *values* are its contents
-+ and *status* is indicating it's status: whether that object was added ("+"), removed ("-"), changed ("-+") or not changed(" ").
-+ In nested objects key *values* are replaced with *children* which a list of dictionaries.
-+  *values* and *children* contain old and new values or/and new children, if they was changed (meaning their parent have *status* "-+").
++  *values* are contents of plain objects and *children* are contents of nested objects,
++  unchanged type of nested objects indicated with *nested status*, while it's contents may be updated.
