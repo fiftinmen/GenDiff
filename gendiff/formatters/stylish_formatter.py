@@ -72,7 +72,6 @@ def generate_view(node, level=DEFAULT_LEVEL):
 
 
 def format_diff(tree):
-    pprint.pprint(tree)
     return '\n'.join([DICTIONARY_START,
                      *[view for node in tree
                       if (view := generate_view(node)) is not None],

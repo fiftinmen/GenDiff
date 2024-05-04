@@ -46,7 +46,6 @@ def handle_node(node, parent=None):
 
 def format_diff(tree):
     views = []
-    pprint.pprint(tree)
     for node in tree:
         views.extend(handle_node(node))
     return '\n'.join(views)
