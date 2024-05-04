@@ -26,116 +26,87 @@ LOADERS = {
 }
 
 
-def Nothing():
-    return
+def generate_node(key, values_key, values, status):
+    return {'key': key, values_key: values, 'status': status}
 
 
-def generate_node(key, node_type, values, status):
-    return {'key': key, node_type: values, 'status': status}
+def combine_old_and_new_values(old, new):
+    return {
+        'old': old,
+        'new': new
+    }
 
 
-def add_node_to_tree(tree, node):
-    if isinstance(tree, dict):
-        tree = [tree]
-    if isinstance(node, list):
-        tree.extend(node)
-    else:
-        tree.append(node)
-    return tree
-
-
-def get_values_key(node1, node2):
-    return 'children' if isinstance(node1, dict) or \
-        isinstance(node2, dict) else 'values'
-
-
-def get_status_of_updated_node(node1, node2):
-    return 'nested' if isinstance(node1, dict) \
-        and isinstance(node2, dict) else 'updated'
-
-
-def compare_nodes(node1, node2):
-    values_key = get_values_key(node1, node2)
-    if node1 == node2:
-        values = node1
+def expanded_dict(dictionary):
+    result = []
+    for key, value in dictionary.items():
+        values_key = 'values'
         status = 'unchanged'
-    elif node1 is not Nothing and node2 is not Nothing:
-        values = {'old': node1, 'new': node2}
-        status = get_status_of_updated_node(node1, node2)
-    elif node1 is Nothing and node2 is not Nothing:
-        values = node2
-        status = 'added'
+        if isinstance(value, dict):
+            value = expanded_dict(value)
+            values_key = 'children'
+            status = 'nested'
+        node = generate_node(key, values_key, value, status)
+        result.append(node)
+    return result
+
+
+def handle_updated_values(value1, value2):
+    is_dict1 = isinstance(value1, dict)
+    is_dict2 = isinstance(value2, dict)
+    if is_dict1 and is_dict2:
+        return 'nested', compare_dicts(value1, value2)
+    elif is_dict1:
+        return 'updated', combine_old_and_new_values(expanded_dict(value1),
+                                                     value2)
+    elif is_dict2:
+        return 'updated', combine_old_and_new_values(value1,
+                                                     expanded_dict(value2))
     else:
-        values = node1
-        status = 'removed'
+        return 'updated', combine_old_and_new_values(value1, value2)
+
+
+def compare_values(value1, value2):
+    is_dict1 = isinstance(value1, dict)
+    is_dict2 = isinstance(value2, dict)
+    values_key = 'children' if is_dict1 or is_dict2 else 'values'
+    if value1 == value2:
+        values = value1
+        if is_dict1:
+            values = expanded_dict(value1)
+        status = 'unchanged'
+        return values_key, values, status
+
+    status, values = handle_updated_values(value1, value2)
     return values_key, values, status
 
 
-def handle_non_dict_comparison(obj1, obj2, get_old):
-    if obj1 is Nothing:
-        return []
-    is_dict1 = isinstance(obj1, dict)
-    is_dict2 = isinstance(obj2, dict)
-    if not is_dict1 and is_dict2:
-        return {
-            'old': obj1,
-            'new': compare_nested_objects(obj2, obj2, get_old)
-        }
-    if not is_dict2 and obj2 is not Nothing:
-        return {
-            'new': obj2,
-            'old': compare_nested_objects(obj1, obj1, get_old)
-        }
-    return None
+def get_values_and_status(value):
+    if isinstance(value, dict):
+        return 'children', expanded_dict(value)
+    else:
+        return 'values', value
 
 
-def get_value(obj, key):
-    return obj.get(key, Nothing) if isinstance(obj, dict) else obj
+def compare_dicts(dict1, dict2):
+    keys1 = set(dict1.keys())
+    keys2 = set(dict2.keys())
+    keys_union = keys1 | keys2
+    diff = []
+    for key in keys_union:
+        if key in keys1 and key in keys2:
+            value1, value2 = dict1[key], dict2[key]
+            values_key, values, status = compare_values(value1, value2)
+        elif key in keys1:
+            values_key, values = get_values_and_status(dict1[key])
+            status = 'removed'
+        else:
+            values_key, values = get_values_and_status(dict2[key])
+            status = 'added'
 
-
-def compare_nested_objects(obj1, obj2, parent_status=None, get_old=True):
-    result = handle_non_dict_comparison(obj1, obj2, get_old)
-    if result is not None:
-        return result
-    node = []
-    is_dict2 = isinstance(obj2, dict)
-    for key1, value1 in obj1.items():
-        value2 = obj2.get(key1, Nothing) if is_dict2 else obj2
-        if get_old:
-            node.extend(compare(value1, value2, parent=key1,
-                                parent_status=parent_status))
-        elif value2 is Nothing:
-            node.extend(compare(value2, value1, parent=key1,
-                                parent_status=parent_status))
-    return node
-
-
-def compare(obj1, obj2, parent=None, parent_status=None):
-    tree = []
-    values_key, values, status = compare_nodes(obj1, obj2)
-
-    if parent is None:
-        parent_status = None
-    elif parent_status:
-        status = 'unchanged'
-    elif status in {'updated', 'added', 'removed'}:
-        parent_status = status
-
-    if values_key == 'values':
-        node = generate_node(parent,
-                             values_key,
-                             values,
-                             status)
-        return add_node_to_tree(tree, node)
-
-    node = compare_nested_objects(obj1, obj2, parent_status=parent_status)
-    new_node = compare_nested_objects(obj2, obj1, get_old=False,
-                                      parent_status=parent_status)
-    add_node_to_tree(node, new_node)
-
-    if parent is not None:
-        node = generate_node(parent, values_key, node, status)
-    return add_node_to_tree(tree, node)
+        node = generate_node(key, values_key, values, status)
+        diff.append(node)
+    return diff
 
 
 def sort_dict(tree):
@@ -162,8 +133,8 @@ def converse_file_to_dict(filename):
 
 
 def generate_diff(file1, file2, formatter='stylish'):
-    diff = sorted_tree(compare(converse_file_to_dict(file1),
-                               converse_file_to_dict(file2)))
+    diff = sorted_tree(compare_dicts(converse_file_to_dict(file1),
+                                     converse_file_to_dict(file2)))
     return FORMATTERS[formatter](diff)
 
 
