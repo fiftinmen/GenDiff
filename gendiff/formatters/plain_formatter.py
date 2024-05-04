@@ -1,6 +1,3 @@
-import pprint
-
-
 MESSAGES = {
     'added': 'added with value: {}',
     'removed': 'removed',
@@ -44,8 +41,8 @@ def handle_node(node, parent=None):
     return views
 
 
-def format_diff(tree):
+def format_diff(diff):
     views = []
-    for node in tree:
+    for node in diff:
         views.extend(handle_node(node))
     return '\n'.join(views)

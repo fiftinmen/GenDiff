@@ -1,4 +1,3 @@
-import pprint
 SIGNS = {
     'added': '+',
     'removed': '-',
@@ -71,8 +70,8 @@ def generate_view(node, level=DEFAULT_LEVEL):
         return generate_line(level, status, key, format_value(values))
 
 
-def format_diff(tree):
+def format_diff(diff):
     return '\n'.join([DICTIONARY_START,
-                     *[view for node in tree
+                     *[view for node in diff
                       if (view := generate_view(node)) is not None],
                      DICTIONARY_END])
