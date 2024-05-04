@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from gendiff.gendiff_parser.gendiff_parser import run_gendiff
+from gendiff.gendiff_parser import run_gendiff
 
 
 def main():

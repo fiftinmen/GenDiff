@@ -1,4 +1,4 @@
-from gendiff.gendiff_parser.gendiff_parser import (
+from gendiff.gendiff_parser import (
     generate_diff,
     compare
 )

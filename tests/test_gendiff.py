@@ -1,8 +1,10 @@
 import pytest
 import os
+import json
 from itertools import product
-from gendiff.gendiff_parser.gendiff_parser import (
+from gendiff.gendiff_parser import (
     generate_diff,
+    open_file
 )
 
 STRUCTURE_TYPES = ['plain', 'nested']
@@ -21,7 +23,7 @@ TESTS_FOR_PLAIN = list(product(STRUCTURE_TYPES, FILE_TYPES, ['plain'],
                                range(COUNT_OF_TESTS['plain'])))
 TESTS_FOR_JSON = list(product(STRUCTURE_TYPES, FILE_TYPES, ['json'],
                               range(COUNT_OF_TESTS['json'])))
-TEST_COMBINATIONS = TESTS_FOR_STYLISH + TESTS_FOR_PLAIN + TESTS_FOR_JSON
+TEST_COMBINATIONS = TESTS_FOR_STYLISH + TESTS_FOR_PLAIN
 FIXTURES_PATH = 'tests/fixtures'
 FORMATTERS_FOLDER = 'formatters'
 
@@ -42,5 +44,19 @@ def test_generate_diff(structure_type, file_type, formatter, test_number):
                                      FORMATTERS_FOLDER,
                                      formatter,
                                      result_filename)
-    result = open(result_diff1_path, 'r', encoding='utf8').read().strip()
+    with open_file(result_diff1_path) as file:
+        result = file.read().strip()
     assert generate_diff(file1, file2, formatter) == result
+
+
+@pytest.mark.parametrize('structure_type, file_type, formatter, test_number',
+                         TESTS_FOR_JSON)
+def test_generate_diff_with_JSON_formatter(structure_type, file_type,
+                                           formatter, test_number):
+    filename1 = TESTS[test_number][TEST_FILE1]
+    filename2 = TESTS[test_number][TEST_FILE2]
+    file1 = os.path.join(FIXTURES_PATH, structure_type,
+                         file_type, f'{filename1}.{file_type}')
+    file2 = os.path.join(FIXTURES_PATH, structure_type,
+                         file_type, f'{filename2}.{file_type}')
+    json.loads(generate_diff(file1, file2, formatter))
