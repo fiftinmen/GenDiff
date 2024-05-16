@@ -52,8 +52,8 @@ def get_path_to_fixture(*args):
 )
 def test_generate_diff(structure_type, file_type,
                        formatter, test_number):
-    filename1 = f'{TESTS[test_number][TEST_FILE1] }.{file_type}'
-    filename2 = f'{TESTS[test_number][TEST_FILE2] }.{file_type}'
+    filename1 = f'{TESTS[test_number][TEST_FILE1]}.{file_type}'
+    filename2 = f'{TESTS[test_number][TEST_FILE2]}.{file_type}'
     result_filename = TESTS[test_number][RESULT_FILE]
 
     file1 = get_path_to_fixture(structure_type, file_type, filename1)
