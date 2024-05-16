@@ -1,8 +1,12 @@
+from gendiff.diff_tools import (
+    build_diff,
+)
 from gendiff.gendiff_parser import (
-    generate_diff,
+    generate_diff
 )
 
 
 __all__ = {
-    'generate_diff',
+    'build_diff',
+    'generate_diff'
 }

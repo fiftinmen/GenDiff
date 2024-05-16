@@ -1,3 +1,9 @@
+from gendiff.diff_tools import (
+    get_key,
+    get_status,
+    get_values,
+    get_values_types
+)
 MESSAGES = {
     'added': 'added with value: {}',
     'removed': 'removed',
@@ -6,39 +12,45 @@ MESSAGES = {
 
 
 def format_value(value):
-    if isinstance(value, list):
-        return '[complex value]'
     stringified_value = str(value)
     return {
-        str: f"'{stringified_value}'",
+        str: value if value == '[complex value]' else f"'{stringified_value}'",
         bool: stringified_value.lower(),
         type(None): 'null',
-    }.get(type(value), str(value))
+    }.get(type(value), stringified_value)
 
 
-def generate_view(key, status, values):
-    old_value = format_value(values)
-    new_value = None
-    if status == 'updated':
-        old_value = format_value(values.get('old'))
-        new_value = format_value(values.get('new'))
-    if status not in {'nested', 'unchanged'}:
-        return [f"Property '{key}' was "
-                f"{MESSAGES[status].format(old_value, new_value)}"]
+def generate_view(key, status, value1, value2):
+    return [f"Property '{key}' was {MESSAGES[status].format(value1, value2)}"]
+
+
+def handle_value(value, value_type):
+    return '[complex value]' if value_type == 'complex' else format_value(value)
 
 
 def handle_node(node, parent=None):
-    key = node.get('key')
+    status = get_status(node)
+    if status == 'unchanged':
+        return []
+
+    key = get_key(node)
     full_key = f'{parent}.{key}' if parent else key
-    values = node.get('children') or node.get('values')
-    status = node.get('status')
-    views = []
     if status == 'nested':
-        for sub_node in values:
-            views.extend(handle_node(sub_node, full_key))
-    elif view := generate_view(full_key, status, values):
-        views.extend(view)
-    return views
+        views = []
+        for child in node.get('children'):
+            views.extend(handle_node(child, full_key))
+        return views
+
+    types = get_values_types(node)
+    values = get_values(node)
+
+    if status == 'updated':
+        value1, value2 = (handle_value(value, type)
+                          for value, type in zip(values, types))
+    else:
+        value1 = handle_value(values, types)
+        value2 = None
+    return generate_view(full_key, status, value1, value2)
 
 
 def format_diff(diff):

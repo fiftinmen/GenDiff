@@ -3,9 +3,15 @@ name = "hexlet-code"
 version = "0.1.0"
 description = "Diff tool for comparing JSON and YAML files. Prints out differences in three formats: stylish (default; show all changed and unchanged contents and their inner structure; plain (shows only changes and hide unchanged nested contents); JSON (show all generated data in JSON format)."
 authors = ["fiftinmen <fiftin.men@gmail.com>"]
+classifiers = [
+    "Topic :: Text Processing :: General",
+    "Topic :: Text Processing :: Filters",
+    "Topic :: Text Processing :: Utilities",
+]
+repository = "https://github.com/fiftinmen/python-project-49"
 readme = "README.md"
 packages = [
-    {include = "gendiff"}
+    {include = "gendiff"},
 ]
 
 [tool.poetry.dependencies]
