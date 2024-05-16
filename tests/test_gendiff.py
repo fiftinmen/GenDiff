@@ -4,7 +4,9 @@ from itertools import product
 from gendiff.gendiff_parser import (
     generate_diff,
 )
-from gendiff.loaders import load, LOADERS
+from gendiff.loaders import (
+    load
+)
 
 STRUCTURE_TYPES = ['plain', 'nested']
 FILE_TYPES = ['json', 'yaml']
@@ -21,19 +23,19 @@ TESTS_FOR_STYLISH = list(product(STRUCTURE_TYPES,
                                  FILE_TYPES,
                                  ['stylish'],
                                  range(COUNT_OF_TESTS['stylish']),
-))
+                                 ))
 
 TESTS_FOR_PLAIN = list(product(STRUCTURE_TYPES,
                                FILE_TYPES,
                                ['plain'],
                                range(COUNT_OF_TESTS['plain']),
-))
+                               ))
 
 TESTS_FOR_JSON = list(product(STRUCTURE_TYPES,
                               FILE_TYPES,
                               ['json'],
                               range(COUNT_OF_TESTS['json']),
-))
+                              ))
 
 TEST_COMBINATIONS = TESTS_FOR_STYLISH + TESTS_FOR_PLAIN + TESTS_FOR_JSON
 FIXTURES_PATH = 'tests/fixtures'
