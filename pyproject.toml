@@ -6,7 +6,7 @@ authors = ["fiftinmen <fiftin.men@gmail.com>"]
 classifiers = [
     "Topic :: Text Processing :: General",
     "Topic :: Text Processing :: Filters",
-    "Topic :: Text Processing :: Utilities",
+    "Topic :: Utilities",
 ]
 repository = "https://github.com/fiftinmen/python-project-49"
 readme = "README.md"
