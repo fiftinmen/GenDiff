@@ -74,34 +74,39 @@ To build and install the package, follow these instructions:
 The tool represents differences in dictionaries accumulated in a list. Here's an example:
 
 ```json
-[
-	{
-		"key": "key1",
-		"values": "value1",
-		"status": "unchanged"
-	},
-	{
-		"key": "key2",
-		"values": {
-			"old": "old_value",
-			"new": "new_value"
-		},
-	"status": "updated"
-	},
-	{
-		"key": "key3",
-		"children": [
-				{
-					"key": "follow",
-					"values": false,
-					"status": "unchanged"
-				}
-			],
-		"status": "nested"
-	}
-]
+[{
+    "key": "common",
+    "status": "nested",
+    "children": [{
+        "key": "follow",
+        "status": "added",
+        "values": false,
+        "type": "simple"
+    }, {
+        "key": "setting1",
+        "status": "unchanged",
+        "values": "Value 1",
+        "type": "simple"
+    }, {
+        "key": "setting2",
+        "status": "removed",
+        "values": 200,
+        "type": "simple"
+    }, {
+        "key": "setting3",
+        "status": "updated",
+        "old_value": true,
+        "new_value": {
+            "key": "value"
+        },
+        "old_type": "simple",
+        "new_type": "complex"
+    }],
+    "type: "diff"
+}]
 ```
 Here:
 + the *key* is a name of an object originating from source files,
 +  *values* are contents of plain objects and *children* are contents of nested objects,
-+  unchanged type of nested objects indicated with *nested status*, while it's contents may be updated.
++  unchanged type of updated nested objects indicated with *nested status*,
++  type (old_type or new_type) indicate whether the value is of simple type (string, number, etc.), complex type (dictionary) or diff.
