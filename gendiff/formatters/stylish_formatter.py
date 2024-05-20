@@ -9,7 +9,7 @@ SIGNS = {
     'removed': '-',
     'nested': ' ',
     'unchanged': ' ',
-    'complex_end': ' '
+    None: '',
 }
 
 DEFAULT_LEVEL = 1
@@ -19,37 +19,37 @@ DICTIONARY_START = '{\n'
 DICTIONARY_END = '}\n'
 
 
+TYPE_TO_STRING = {
+    bool: lambda x: str(x).lower(),
+    type(None): lambda _: 'null',
+}
+
+
 def format_value(value):
-    stringified_value = str(value)
-    return {
-        bool: stringified_value.lower(),
-        type(None): 'null',
-    }.get(type(value), stringified_value)
+    return TYPE_TO_STRING.get(type(value), str)(value)
 
 
-def generate_view(level, status, key='', value='', *, separator=': '):
+def generate_view(level, status=None, key='', value='', separator=': '):
     if isinstance(value, dict):
-        return handle_complex_value(level, status, key, value)
+        return generate_complex_view(
+            level, status, key, dict(sorted(value.items())))
     else:
-        return [f'{FILLER * level}{SIGNS[status]} {key}{separator}',
-                f'{format_value(value)}\n']
+        return generate_simple_view(
+            level, status, key, value, separator=separator
+        )
 
 
-def handle_complex_value(level, status, key, value):
-    start = generate_view(level, status, key, separator=': {')
-    end = generate_view(level, 'complex_end', separator='}')
+def generate_simple_view(level, status=None, key='', value='', separator=': '):
+    return [f'{FILLER * level}{SIGNS[status]} {key}{separator}',
+            f'{format_value(value)}\n']
+
+
+def generate_complex_view(level, status, key, value):
+    start = generate_simple_view(level, status, key, separator=': {')
+    end = generate_simple_view(level, separator=' }')
     views = []
     for key, value in value.items():
-        if isinstance(value, dict):
-            value = dict(sorted(value.items()))
-            views.extend(handle_complex_value(
-                level + 2,
-                'unchanged',
-                key,
-                value
-            ))
-        else:
-            views.extend(generate_view(level + 2, 'unchanged', key, value))
+        views.extend(generate_view(level + 2, 'unchanged', key, value))
     return start + views + end
 
 
@@ -65,10 +65,12 @@ def handle_node(node, level=DEFAULT_LEVEL):
     value = get_value(node)
 
     if status == 'updated':
-        return handle_updated_value(level, key, value)
+        old_value, new_value = value
+        return generate_view(level, 'removed', key, old_value) + \
+            generate_view(level, 'added', key, new_value)
     elif status == 'nested':
-        start = generate_view(level, status, key, separator=': {')
-        end = generate_view(level, status, separator='}')
+        start = generate_simple_view(level, status, key, separator=': {')
+        end = generate_simple_view(level, status, separator='}')
         return start + handle_diff(value, level + 2) + end
     else:
         return generate_view(level, status, key, value)

@@ -9,19 +9,17 @@ MESSAGES = {
     'updated': "updated. From {} to {}"
 }
 
+TYPE_TO_STRING = {
+    dict: lambda x: '[complex value]',
+    bool: lambda x: str(x).lower(),
+    type(None): lambda _: 'null',
+    int: lambda x: str(x),
+    str: lambda x: f"'{x}'",
+}
+
 
 def format_value(value):
-    stringified_value = str(value)
-    return {
-        dict: '[complex value]',
-        str: f"'{stringified_value}'",
-        bool: stringified_value.lower(),
-        type(None): 'null',
-    }.get(type(value), stringified_value)
-
-
-def generate_view(key, status, value1, value2):
-    return [f"Property '{key}' was {MESSAGES[status].format(value1, value2)}"]
+    return TYPE_TO_STRING.get(type(value))(value)
 
 
 def handle_node(node, parent=None):
@@ -39,12 +37,12 @@ def handle_node(node, parent=None):
 
     value = get_value(node)
     if status == 'updated':
-        value1, value2 = value
-        value1, value2 = format_value(value1), format_value(value2)
+        val1, val2 = value
+        val1, val2 = format_value(val1), format_value(val2)
     else:
-        value1 = format_value(value)
-        value2 = None
-    return generate_view(full_key, status, value1, value2)
+        val1 = format_value(value)
+        val2 = None
+    return [f"Property '{full_key}' was {MESSAGES[status].format(val1, val2)}"]
 
 
 def format_diff(diff):
