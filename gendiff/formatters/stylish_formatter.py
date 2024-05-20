@@ -29,13 +29,13 @@ def format_value(value):
     return TYPE_TO_STRING.get(type(value), str)(value)
 
 
-def generate_view(level, status=None, key='', value='', separator=': '):
+def generate_view(level, status=None, key='', value=''):
     if isinstance(value, dict):
         return generate_complex_view(
             level, status, key, dict(sorted(value.items())))
     else:
         return generate_simple_view(
-            level, status, key, value, separator=separator
+            level, status, key, value
         )
 
 
@@ -51,12 +51,6 @@ def generate_complex_view(level, status, key, value):
     for key, value in value.items():
         views.extend(generate_view(level + 2, 'unchanged', key, value))
     return start + views + end
-
-
-def handle_updated_value(level, key, value):
-    old_value, new_value = value
-    return generate_view(level, 'removed', key, old_value) + \
-        generate_view(level, 'added', key, new_value)
 
 
 def handle_node(node, level=DEFAULT_LEVEL):

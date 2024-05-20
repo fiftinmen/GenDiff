@@ -37,8 +37,7 @@ def handle_node(node, parent=None):
 
     value = get_value(node)
     if status == 'updated':
-        val1, val2 = value
-        val1, val2 = format_value(val1), format_value(val2)
+        val1, val2 = (format_value(val) for val in value)
     else:
         val1 = format_value(value)
         val2 = None
