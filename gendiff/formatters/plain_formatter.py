@@ -1,8 +1,7 @@
 from gendiff.diff_tools import (
     get_key,
     get_status,
-    get_values,
-    get_values_types
+    get_value,
 )
 MESSAGES = {
     'added': 'added with value: {}',
@@ -14,7 +13,8 @@ MESSAGES = {
 def format_value(value):
     stringified_value = str(value)
     return {
-        str: value if value == '[complex value]' else f"'{stringified_value}'",
+        dict: '[complex value]',
+        str: f"'{stringified_value}'",
         bool: stringified_value.lower(),
         type(None): 'null',
     }.get(type(value), stringified_value)
@@ -22,10 +22,6 @@ def format_value(value):
 
 def generate_view(key, status, value1, value2):
     return [f"Property '{key}' was {MESSAGES[status].format(value1, value2)}"]
-
-
-def handle_value(value, value_type):
-    return '[complex value]' if value_type == 'complex' else format_value(value)
 
 
 def handle_node(node, parent=None):
@@ -41,14 +37,12 @@ def handle_node(node, parent=None):
             views.extend(handle_node(child, full_key))
         return views
 
-    types = get_values_types(node)
-    values = get_values(node)
-
+    value = get_value(node)
     if status == 'updated':
-        value1, value2 = (handle_value(value, type)
-                          for value, type in zip(values, types))
+        value1, value2 = value
+        value1, value2 = format_value(value1), format_value(value2)
     else:
-        value1 = handle_value(values, types)
+        value1 = format_value(value)
         value2 = None
     return generate_view(full_key, status, value1, value2)
 

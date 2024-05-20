@@ -1,8 +1,7 @@
 from gendiff.diff_tools import (
     get_key,
     get_status,
-    get_values,
-    get_values_types
+    get_value,
 )
 
 SIGNS = {
@@ -23,18 +22,17 @@ DICTIONARY_END = '}\n'
 def format_value(value):
     stringified_value = str(value)
     return {
-        'True': 'true',
-        'False': 'false',
-        'None': 'null'
-    }.get(stringified_value, stringified_value)
+        bool: stringified_value.lower(),
+        type(None): 'null',
+    }.get(type(value), stringified_value)
 
 
-def generate_view(level, status, key='', value='', type='', *, separator=': '):
-    return handle_complex_value(
-        level, status, key, value
-    ) if type == 'complex' else \
-        [f'{FILLER * level}{SIGNS[status]} {key}{separator}',
-         f'{format_value(value)}\n']
+def generate_view(level, status, key='', value='', *, separator=': '):
+    if isinstance(value, dict):
+        return handle_complex_value(level, status, key, value)
+    else:
+        return [f'{FILLER * level}{SIGNS[status]} {key}{separator}',
+                f'{format_value(value)}\n']
 
 
 def handle_complex_value(level, status, key, value):
@@ -51,33 +49,29 @@ def handle_complex_value(level, status, key, value):
                 value
             ))
         else:
-            views.extend(generate_view(
-                level + 2, 'unchanged', key, value, 'simple'
-            ))
+            views.extend(generate_view(level + 2, 'unchanged', key, value))
     return start + views + end
 
 
-def handle_updated_values(level, key, values, types):
-    old_value, new_value = values
-    old_type, new_type = types
-    return generate_view(level, 'removed', key, old_value, old_type) + \
-        generate_view(level, 'added', key, new_value, new_type)
+def handle_updated_value(level, key, value):
+    old_value, new_value = value
+    return generate_view(level, 'removed', key, old_value) + \
+        generate_view(level, 'added', key, new_value)
 
 
 def handle_node(node, level=DEFAULT_LEVEL):
     status = get_status(node)
     key = get_key(node)
-    values = get_values(node)
-    types = get_values_types(node)
+    value = get_value(node)
 
     if status == 'updated':
-        return handle_updated_values(level, key, values, types)
+        return handle_updated_value(level, key, value)
     elif status == 'nested':
         start = generate_view(level, status, key, separator=': {')
         end = generate_view(level, status, separator='}')
-        return start + handle_diff(values, level + 2) + end
+        return start + handle_diff(value, level + 2) + end
     else:
-        return generate_view(level, status, key, values, types)
+        return generate_view(level, status, key, value)
 
 
 def handle_diff(diff, level=DEFAULT_LEVEL):
