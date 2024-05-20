@@ -10,7 +10,7 @@ MESSAGES = {
 }
 
 TYPE_TO_STRING = {
-    dict: lambda x: '[complex value]',
+    dict: lambda _: '[complex value]',
     bool: lambda x: str(x).lower(),
     type(None): lambda _: 'null',
     int: lambda x: str(x),
