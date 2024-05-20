@@ -80,33 +80,26 @@ The tool represents differences in dictionaries accumulated in a list. Here's an
     "children": [{
         "key": "follow",
         "status": "added",
-        "values": false,
-        "type": "simple"
+        "values": false
     }, {
         "key": "setting1",
         "status": "unchanged",
-        "values": "Value 1",
-        "type": "simple"
+        "values": "Value 1"
     }, {
         "key": "setting2",
         "status": "removed",
-        "values": 200,
-        "type": "simple"
+        "values": 200
     }, {
         "key": "setting3",
         "status": "updated",
         "old_value": true,
         "new_value": {
             "key": "value"
-        },
-        "old_type": "simple",
-        "new_type": "complex"
-    }],
-    "type: "diff"
+        }
+    }]
 }]
 ```
 Here:
 + the *key* is a name of an object originating from source files,
 +  *values* are contents of plain objects and *children* are contents of nested objects,
-+  unchanged type of updated nested objects indicated with *nested status*,
-+  type (old_type or new_type) indicate whether the value is of simple type (string, number, etc.), complex type (dictionary) or diff.
++  unchanged type of updated nested objects indicated with *nested status*,.
